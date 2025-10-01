@@ -372,6 +372,28 @@ impl NecV60 {
                 self.registers.pc += instruction.size;
             },
             
+            // Instructions d'interruption
+            Instruction::SoftwareInterrupt { vector } => {
+                let interrupt = crate::cpu::Interrupt::External(*vector);
+                self.queue_interrupt(interrupt);
+                self.registers.pc += instruction.size;
+            },
+            
+            Instruction::ReturnFromInterrupt => {
+                self.return_from_interrupt(memory)?;
+                // PC est déjà mis à jour par return_from_interrupt
+            },
+            
+            Instruction::EnableInterrupts => {
+                self.interrupts_enabled = true;
+                self.registers.pc += instruction.size;
+            },
+            
+            Instruction::DisableInterrupts => {
+                self.interrupts_enabled = false;
+                self.registers.pc += instruction.size;
+            },
+            
             Instruction::Unknown { opcode } => {
                 return Err(anyhow!("Instruction inconnue: {:#08x} à l'adresse {:#08x}", 
                                  opcode, instruction.address));

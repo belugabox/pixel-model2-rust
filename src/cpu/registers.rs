@@ -195,6 +195,10 @@ impl ProcessorStatusWord {
             ConditionCode::Positive => !self.contains(Self::SIGN),
             ConditionCode::Overflow => self.contains(Self::OVERFLOW),
             ConditionCode::NotOverflow => !self.contains(Self::OVERFLOW),
+            ConditionCode::Greater => !self.contains(Self::ZERO) && (self.contains(Self::SIGN) == self.contains(Self::OVERFLOW)),
+            ConditionCode::Less => self.contains(Self::SIGN) != self.contains(Self::OVERFLOW),
+            ConditionCode::GreaterEqual => self.contains(Self::SIGN) == self.contains(Self::OVERFLOW),
+            ConditionCode::LessEqual => self.contains(Self::ZERO) || (self.contains(Self::SIGN) != self.contains(Self::OVERFLOW)),
         }
     }
 }
@@ -212,4 +216,8 @@ pub enum ConditionCode {
     Positive,
     Overflow,
     NotOverflow,
+    Greater,
+    Less,
+    GreaterEqual,
+    LessEqual,
 }

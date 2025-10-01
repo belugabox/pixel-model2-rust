@@ -13,6 +13,7 @@ pub mod shaders;
 pub mod framebuffer;
 
 use anyhow::Result;
+use std::sync::Arc;
 
 pub use renderer::*;
 pub use geometry::*;
@@ -46,9 +47,9 @@ impl Model2Resolution {
 }
 
 /// Structure principale du GPU Model 2
-pub struct Model2Gpu<'window> {
+pub struct Model2Gpu {
     /// Rendu moderne utilisant wgpu
-    pub renderer: WgpuRenderer<'window>,
+    pub renderer: WgpuRenderer,
     
     /// Géométrie 3D en cours de traitement
     pub geometry_processor: GeometryProcessor,
@@ -69,9 +70,9 @@ pub struct Model2Gpu<'window> {
     pub config: RenderConfig,
 }
 
-impl<'window> Model2Gpu<'window> {
+impl Model2Gpu {
     /// Crée une nouvelle instance du GPU Model 2
-    pub async fn new(window: &'window winit::window::Window) -> Result<Self> {
+    pub async fn new(window: Arc<winit::window::Window>) -> Result<Self> {
         let renderer = WgpuRenderer::new(window).await?;
         let (width, height) = Model2Resolution::Standard.dimensions();
         

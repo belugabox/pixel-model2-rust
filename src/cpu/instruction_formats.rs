@@ -88,223 +88,217 @@ impl V60InstructionDecoder {
         if let Some(cached) = self.instruction_cache.get(&address) {
             return Ok(cached.clone());
         }
-        
+
         if data.len() < 2 {
             return Err(anyhow!("Données insuffisantes pour décoder l'instruction"));
         }
-        
+
         // Lire les premiers 16 bits pour déterminer le format
         let first_word = u16::from_le_bytes([data[0], data[1]]);
-        let opcode = ((first_word >> 12) & 0xF) as u8;
-        
+        let opcode = ((first_word >> 10) & 0x3F) as u8;
+
         let format = self.determine_format(opcode, first_word, data)?;
+        let instruction = self.decode_format(&format)?;
         let size = self.calculate_instruction_size(&format);
-        let instruction = self.decode_format(format)?;
-        
+
         let decoded = DecodedInstruction::new(instruction, address, size);
-        
+
         // Mettre en cache
         self.instruction_cache.insert(address, decoded.clone());
-        
+
         Ok(decoded)
     }
-    
-    /// Détermine le format d'instruction basé sur l'opcode
+
+    /// Détermine le format de l'instruction
     fn determine_format(&self, opcode: u8, first_word: u16, data: &[u8]) -> Result<InstructionFormat> {
         match opcode {
-            // Instructions arithmétiques et logiques (Formats 1-3)
-            0x0..=0x7 => {
-                let r2 = ((first_word >> 8) & 0xF) as u8;
-                let r1 = ((first_word >> 4) & 0xF) as u8;
-                let mode = (first_word & 0xF) as u8;
-                
-                match mode {
-                    // Mode immédiat - Format 2
-                    0x1 | 0x2 => {
-                        if data.len() < 4 {
-                            return Err(anyhow!("Données insuffisantes pour Format 2"));
-                        }
-                        let immediate = u16::from_le_bytes([data[2], data[3]]);
-                        Ok(InstructionFormat::Format2 { opcode, r2, r1, mode, immediate })
-                    },
-                    // Mode avec déplacement - Format 3
-                    0x3 | 0x4 => {
-                        if data.len() < 6 {
-                            return Err(anyhow!("Données insuffisantes pour Format 3"));
-                        }
-                        let disp_low = u16::from_le_bytes([data[2], data[3]]);
-                        let disp_high = u16::from_le_bytes([data[4], data[5]]);
-                        let displacement = ((disp_high as u32) << 16) | (disp_low as u32);
-                        Ok(InstructionFormat::Format3 { opcode, r2, r1, mode, displacement })
-                    },
-                    // Mode registre - Format 1
-                    _ => Ok(InstructionFormat::Format1 { opcode, r2, r1, mode }),
-                }
+            // Instructions Format 1 (16 bits) - opérations basiques
+            0x00..=0x0F => {
+                let r2 = ((first_word >> 5) & 0x1F) as u8;
+                let r1 = (first_word & 0x1F) as u8;
+                Ok(InstructionFormat::Format1 {
+                    opcode,
+                    r2,
+                    r1,
+                    mode: 0,
+                })
             },
-            
-            // Instructions de branchement (Format 4)
-            0x8..=0xB => {
+
+            // Instructions Format 2 (32 bits) - avec immédiat
+            0x10..=0x1F => {
+                if data.len() < 4 {
+                    return Err(anyhow!("Données insuffisantes pour Format 2"));
+                }
+                let r2 = ((first_word >> 5) & 0x1F) as u8;
+                let r1 = (first_word & 0x1F) as u8;
+                let immediate = u16::from_le_bytes([data[2], data[3]]);
+                Ok(InstructionFormat::Format2 {
+                    opcode,
+                    r2,
+                    r1,
+                    mode: 0,
+                    immediate,
+                })
+            },
+
+            // Instructions Format 3 (48 bits) - avec déplacement
+            0x20..=0x2F => {
+                if data.len() < 6 {
+                    return Err(anyhow!("Données insuffisantes pour Format 3"));
+                }
+                let r2 = ((first_word >> 5) & 0x1F) as u8;
+                let r1 = (first_word & 0x1F) as u8;
+                let displacement = u32::from_le_bytes([data[2], data[3], data[4], data[5]]);
+                Ok(InstructionFormat::Format3 {
+                    opcode,
+                    r2,
+                    r1,
+                    mode: 0,
+                    displacement,
+                })
+            },
+
+            // Instructions Format 4 (32 bits) - branchements
+            0x30..=0x3F => {
                 if data.len() < 4 {
                     return Err(anyhow!("Données insuffisantes pour Format 4"));
                 }
-                let condition = ((first_word >> 8) & 0xF) as u8;
-                let disp_low = (first_word & 0xFF) as i32;
-                let disp_high = i16::from_le_bytes([data[2], data[3]]) as i32;
-                let displacement = (disp_high << 8) | disp_low;
-                Ok(InstructionFormat::Format4 { opcode, condition, displacement })
+                let condition = ((first_word >> 5) & 0x1F) as u8;
+                let displacement = i32::from_le_bytes([data[1] as i8 as i32 as u8, data[2], data[3], 0]);
+                Ok(InstructionFormat::Format4 {
+                    opcode,
+                    condition,
+                    displacement,
+                })
             },
-            
-            // Instructions système (Format 5)
-            0xC..=0xF => {
-                let function = ((first_word >> 8) & 0xF) as u8;
-                let immediate = (first_word & 0xFF) as u8;
-                Ok(InstructionFormat::Format5 { opcode, function, immediate })
+
+            // Instructions Format 5 (16 bits) - système
+            0x38..=0x3F => {
+                let function = ((first_word >> 5) & 0x1F) as u8;
+                let immediate = (first_word & 0x1F) as u8;
+                Ok(InstructionFormat::Format5 {
+                    opcode,
+                    function,
+                    immediate,
+                })
             },
-            // Cas par défaut pour les opcodes non supportés
-            _ => {
-                let r2 = ((first_word >> 8) & 0xF) as u8;
-                let r1 = ((first_word >> 4) & 0xF) as u8;
-                let mode = (first_word & 0xF) as u8;
-                Ok(InstructionFormat::Format1 { opcode, r2, r1, mode })
-            },
+
+            _ => Err(anyhow!("Opcode inconnu: 0x{:02X}", opcode)),
         }
     }
-    
-    /// Décode le format d'instruction en instruction exécutable
-    fn decode_format(&self, format: InstructionFormat) -> Result<Instruction> {
+
+    /// Décode un format en instruction
+    fn decode_format(&self, format: &InstructionFormat) -> Result<Instruction> {
         match format {
-            InstructionFormat::Format1 { opcode, r2, r1, mode } => {
-                self.decode_format1(opcode, r2, r1, mode)
+            InstructionFormat::Format1 { opcode, r2, r1, .. } => {
+                self.decode_format1(*opcode, *r2, *r1)
             },
-            InstructionFormat::Format2 { opcode, r2, r1, mode, immediate } => {
-                self.decode_format2(opcode, r2, r1, mode, immediate)
+            InstructionFormat::Format2 { opcode, r2, r1, immediate, .. } => {
+                self.decode_format2(*opcode, *r2, *r1, *immediate)
             },
-            InstructionFormat::Format3 { opcode, r2, r1, mode, displacement } => {
-                self.decode_format3(opcode, r2, r1, mode, displacement)
+            InstructionFormat::Format3 { opcode, r2, r1, displacement, .. } => {
+                self.decode_format3(*opcode, *r2, *r1, *displacement)
             },
             InstructionFormat::Format4 { opcode, condition, displacement } => {
-                self.decode_format4(opcode, condition, displacement)
+                self.decode_format4(*opcode, *condition, *displacement)
             },
             InstructionFormat::Format5 { opcode, function, immediate } => {
-                self.decode_format5(opcode, function, immediate)
+                self.decode_format5(*opcode, *function, *immediate)
             },
         }
     }
-    
-    /// Décode les instructions Format 1 (registre vers registre)
-    fn decode_format1(&self, opcode: u8, r2: u8, r1: u8, _mode: u8) -> Result<Instruction> {
+
+    /// Décode Format 1 (opérations basiques)
+    fn decode_format1(&self, opcode: u8, r2: u8, r1: u8) -> Result<Instruction> {
         let dest = Operand::Register(r2 as usize);
-        let src1 = Operand::Register(r1 as usize);
-        let src2 = Operand::Register(r1 as usize); // Pour certaines instructions à 2 opérandes
-        
+        let src = Operand::Register(r1 as usize);
+
         match opcode {
-            0x0 => Ok(Instruction::Add { dest, src1, src2 }),
-            0x1 => Ok(Instruction::Sub { dest, src1, src2 }),
-            0x2 => Ok(Instruction::Mul { dest, src1, src2 }),
-            0x3 => Ok(Instruction::Div { dest, src1, src2 }),
-            0x4 => Ok(Instruction::And { dest, src1, src2 }),
-            0x5 => Ok(Instruction::Or { dest, src1, src2 }),
-            0x6 => Ok(Instruction::Xor { dest, src1, src2 }),
-            0x7 => Ok(Instruction::Mov { dest, src: src1 }),
-            _ => Err(anyhow!("Opcode Format1 inconnu: {:#x}", opcode)),
+            0x00 => Ok(Instruction::Mov { dest, src }),
+            0x01 => Ok(Instruction::Add { dest: dest.clone(), src1: dest, src2: src }),
+            0x02 => Ok(Instruction::Sub { dest: dest.clone(), src1: dest, src2: src }),
+            0x03 => Ok(Instruction::And { dest: dest.clone(), src1: dest, src2: src }),
+            0x04 => Ok(Instruction::Or { dest: dest.clone(), src1: dest, src2: src }),
+            0x05 => Ok(Instruction::Xor { dest: dest.clone(), src1: dest, src2: src }),
+            0x06 => Ok(Instruction::Compare { src1: dest, src2: src }),
+            _ => Ok(Instruction::Unknown { opcode: (opcode as u32) << 16 | (r2 as u32) << 8 | r1 as u32 }),
         }
     }
-    
-    /// Décode les instructions Format 2 (avec immédiat)
-    fn decode_format2(&self, opcode: u8, r2: u8, r1: u8, _mode: u8, immediate: u16) -> Result<Instruction> {
+
+    /// Décode Format 2 (avec immédiat)
+    fn decode_format2(&self, opcode: u8, r2: u8, r1: u8, immediate: u16) -> Result<Instruction> {
         let dest = Operand::Register(r2 as usize);
-        let src1 = Operand::Register(r1 as usize);
-        let src2 = Operand::Immediate(immediate as u32);
-        
+        let src = Operand::Register(r1 as usize);
+        let imm = Operand::Immediate(immediate as u32);
+
         match opcode {
-            0x0 => Ok(Instruction::Add { dest, src1, src2 }),
-            0x1 => Ok(Instruction::Sub { dest, src1, src2 }),
-            0x2 => Ok(Instruction::Mul { dest, src1, src2 }),
-            0x3 => Ok(Instruction::Compare { src1, src2 }),
-            0x4 => Ok(Instruction::And { dest, src1, src2 }),
-            0x5 => Ok(Instruction::Or { dest, src1, src2 }),
-            0x6 => Ok(Instruction::Test { src1, src2 }),
-            0x7 => Ok(Instruction::Mov { dest, src: src2 }),
-            _ => Err(anyhow!("Opcode Format2 inconnu: {:#x}", opcode)),
+            0x10 => Ok(Instruction::Mov { dest, src: imm }),
+            0x11 => Ok(Instruction::Add { dest: dest.clone(), src1: dest, src2: imm }),
+            0x12 => Ok(Instruction::Sub { dest: dest.clone(), src1: dest, src2: imm }),
+            0x13 => Ok(Instruction::And { dest: dest.clone(), src1: dest, src2: imm }),
+            0x14 => Ok(Instruction::Or { dest: dest.clone(), src1: dest, src2: imm }),
+            0x15 => Ok(Instruction::Xor { dest: dest.clone(), src1: dest, src2: imm }),
+            0x16 => Ok(Instruction::Compare { src1: dest, src2: imm }),
+            _ => Ok(Instruction::Unknown { opcode: (opcode as u32) << 24 | (r2 as u32) << 16 | (r1 as u32) << 8 | immediate as u32 }),
         }
     }
-    
-    /// Décode les instructions Format 3 (avec déplacement)
-    fn decode_format3(&self, opcode: u8, r2: u8, r1: u8, mode: u8, displacement: u32) -> Result<Instruction> {
-        let reg = Operand::Register(r2 as usize);
-        let base_reg = r1 as usize;
-        
-        let address = match mode {
-            0x3 => Operand::IndirectOffset(base_reg, displacement as i32),
-            0x4 => Operand::Direct(displacement),
-            _ => Operand::Direct(displacement),
-        };
-        
-        let size = DataSize::DWord; // Par défaut, peut être déterminé par d'autres bits
-        
+
+    /// Décode Format 3 (avec déplacement)
+    fn decode_format3(&self, opcode: u8, r2: u8, r1: u8, displacement: u32) -> Result<Instruction> {
+        let dest = Operand::Register(r2 as usize);
+        let addr = Operand::IndirectOffset(r1 as usize, displacement as i32);
+
         match opcode {
-            0x0 => Ok(Instruction::Load { dest: reg, address, size }),
-            0x1 => Ok(Instruction::Store { src: reg, address, size }),
-            _ => Err(anyhow!("Opcode Format3 inconnu: {:#x}", opcode)),
+            0x20 => Ok(Instruction::Load { dest, address: addr, size: DataSize::DWord }),
+            0x21 => Ok(Instruction::Store { src: dest, address: addr, size: DataSize::DWord }),
+            _ => Ok(Instruction::Unknown { opcode: (opcode as u32) << 24 | (r2 as u32) << 16 | (r1 as u32) << 8 | displacement }),
         }
     }
-    
-    /// Décode les instructions Format 4 (branchement)
+
+    /// Décode Format 4 (branchements)
     fn decode_format4(&self, opcode: u8, condition: u8, displacement: i32) -> Result<Instruction> {
-        let target = Operand::PcRelative(displacement);
-        
+        let target = Operand::Immediate(displacement as u32);
+        let cond = match condition {
+            0x00 => ConditionCode::Always,
+            0x01 => ConditionCode::Equal,
+            0x02 => ConditionCode::NotEqual,
+            0x03 => ConditionCode::Greater,
+            0x04 => ConditionCode::Less,
+            0x05 => ConditionCode::GreaterEqual,
+            0x06 => ConditionCode::LessEqual,
+            _ => ConditionCode::Always,
+        };
+
         match opcode {
-            0x8 => Ok(Instruction::Jump { target }),
-            0x9 => Ok(Instruction::Call { target }),
-            0xA | 0xB => {
-                let cond = self.decode_condition(condition)?;
-                Ok(Instruction::JumpConditional { condition: cond, target })
-            },
-            _ => Err(anyhow!("Opcode Format4 inconnu: {:#x}", opcode)),
+            0x30 => Ok(Instruction::Jump { target }),
+            0x31 => Ok(Instruction::JumpConditional { condition: cond, target }),
+            0x32 => Ok(Instruction::Call { target }),
+            _ => Ok(Instruction::Unknown { opcode: (opcode as u32) << 16 | (condition as u32) << 8 | displacement as u32 }),
         }
     }
-    
-    /// Décode les instructions Format 5 (système)
-    fn decode_format5(&self, opcode: u8, function: u8, _immediate: u8) -> Result<Instruction> {
-        match opcode {
-            0xC => match function {
-                0x0 => Ok(Instruction::Nop),
-                0x1 => Ok(Instruction::Halt),
-                0x2 => Ok(Instruction::Return),
-                0x3 => Ok(Instruction::InterruptReturn),
-                _ => Ok(Instruction::Unknown { opcode: (opcode as u32) << 8 | (function as u32) }),
-            },
-            _ => Ok(Instruction::Unknown { opcode: opcode as u32 }),
+
+    /// Décode Format 5 (système)
+    fn decode_format5(&self, opcode: u8, function: u8, immediate: u8) -> Result<Instruction> {
+        match function {
+            0x00 => Ok(Instruction::Nop),
+            0x01 => Ok(Instruction::Halt),
+            0x02 => Ok(Instruction::Return),
+            0x03 => Ok(Instruction::InterruptReturn),
+            _ => Ok(Instruction::Unknown { opcode: (opcode as u32) << 16 | (function as u32) << 8 | immediate as u32 }),
         }
     }
-    
-    /// Décode un code de condition
-    fn decode_condition(&self, condition: u8) -> Result<ConditionCode> {
-        match condition {
-            0x0 => Ok(ConditionCode::Always),
-            0x1 => Ok(ConditionCode::Never),
-            0x2 => Ok(ConditionCode::Equal),
-            0x3 => Ok(ConditionCode::NotEqual),
-            0x4 => Ok(ConditionCode::Carry),
-            0x5 => Ok(ConditionCode::NotCarry),
-            0x6 => Ok(ConditionCode::Negative),
-            0x7 => Ok(ConditionCode::Positive),
-            0x8 => Ok(ConditionCode::Overflow),
-            0x9 => Ok(ConditionCode::NotOverflow),
-            _ => Err(anyhow!("Code de condition invalide: {:#x}", condition)),
-        }
-    }
-    
-    /// Calcule la taille d'une instruction en octets
+
+    /// Calcule la taille d'une instruction selon son format
     fn calculate_instruction_size(&self, format: &InstructionFormat) -> u32 {
         match format {
             InstructionFormat::Format1 { .. } => 2,
-            InstructionFormat::Format2 { .. } | InstructionFormat::Format4 { .. } => 4,
+            InstructionFormat::Format2 { .. } => 4,
             InstructionFormat::Format3 { .. } => 6,
+            InstructionFormat::Format4 { .. } => 4,
             InstructionFormat::Format5 { .. } => 2,
         }
     }
-    
+
     /// Vide le cache d'instructions
     pub fn clear_cache(&mut self) {
         self.instruction_cache.clear();

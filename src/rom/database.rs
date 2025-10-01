@@ -232,9 +232,9 @@ impl GameDatabase {
             version: "2.1".to_string(),
             required_roms: vec![
                 RomInfo {
-                    filename: "vf2.ic1".to_string(),
+                    filename: "epr-17574.30".to_string(),
                     rom_type: RomType::Program,
-                    size: 0x80000,
+                    size: 524288,
                     crc32: 0x1234ABCD,
                     md5: "d41d8cd98f00b204e9800998ecf8427e".to_string(),
                     load_address: 0x00000000,
@@ -242,9 +242,9 @@ impl GameDatabase {
                     required: true,
                 },
                 RomInfo {
-                    filename: "vf2.ic2".to_string(),
+                    filename: "epr-18022.ic2".to_string(),
                     rom_type: RomType::Program,
-                    size: 0x80000,
+                    size: 65536,
                     crc32: 0x5678EFAB,
                     md5: "e99a18c428cb38d5f260853678922e03".to_string(),
                     load_address: 0x00080000,
@@ -283,9 +283,9 @@ impl GameDatabase {
             version: "1.0".to_string(),
             required_roms: vec![
                 RomInfo {
-                    filename: "daytona.ic1".to_string(),
+                    filename: "epr-16724a.6".to_string(),
                     rom_type: RomType::Program,
-                    size: 0x100000,
+                    size: 524288,
                     crc32: 0xABCD1234,
                     md5: "c4ca4238a0b923820dcc509a6f75849b".to_string(),
                     load_address: 0x00000000,
@@ -324,9 +324,9 @@ impl GameDatabase {
             version: "1.0".to_string(),
             required_roms: vec![
                 RomInfo {
-                    filename: "vcop.ic1".to_string(),
+                    filename: "epr-17168a.6".to_string(),
                     rom_type: RomType::Program,
-                    size: 0x80000,
+                    size: 524288,
                     crc32: 0xDEADBEEF,
                     md5: "37b51d194a7513e45b56f6524f2d51f2".to_string(),
                     load_address: 0x00000000,

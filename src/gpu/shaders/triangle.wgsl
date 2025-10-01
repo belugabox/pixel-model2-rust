@@ -12,12 +12,25 @@ struct VertexOutput {
     @location(1) color: vec4<f32>,
 }
 
+// Matrices de transformation 3D
+struct Matrices {
+    model: mat4x4<f32>,
+    view: mat4x4<f32>,
+    projection: mat4x4<f32>,
+}
+
+@group(1) @binding(0)
+var<uniform> matrices: Matrices;
+
 @vertex
 fn vs_main(input: VertexInput) -> VertexOutput {
     var output: VertexOutput;
     
-    // Transformation directe pour l'instant (les matrices seront ajoutées plus tard)
-    output.clip_position = vec4<f32>(input.position, 1.0);
+    // Appliquer les transformations 3D: Projection * View * Model * Position
+    let model_view = matrices.view * matrices.model;
+    let mvp = matrices.projection * model_view;
+    output.clip_position = mvp * vec4<f32>(input.position, 1.0);
+    
     output.tex_coords = input.tex_coords;
     output.color = input.color;
     

@@ -29,6 +29,47 @@ pub use bit_manipulation::*;
 pub use string_operations::*;
 pub use bcd::*;
 
+/// Types d'interruptions du SEGA Model 2
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Interrupt {
+    /// Interruption VBLANK (fin de frame vidéo)
+    VBlank = 0x01,
+    
+    /// Interruption timer principal
+    TimerMain = 0x02,
+    
+    /// Interruption timer secondaire
+    TimerSub = 0x03,
+    
+    /// Interruption GPU
+    Gpu = 0x04,
+    
+    /// Interruption audio
+    Audio = 0x05,
+    
+    /// Interruption d'entrée
+    Input = 0x06,
+    
+    /// Interruption externe générique
+    External(u8),
+}
+
+impl Interrupt {
+    /// Retourne le vecteur d'interruption (adresse dans la table des vecteurs)
+    pub fn vector_address(self) -> u32 {
+        match self {
+            Interrupt::VBlank => 0x00000040,
+            Interrupt::TimerMain => 0x00000044,
+            Interrupt::TimerSub => 0x00000048,
+            Interrupt::Gpu => 0x0000004C,
+            Interrupt::Audio => 0x00000050,
+            Interrupt::Input => 0x00000054,
+            Interrupt::External(vector) => 0x00000058 + (vector as u32 * 4),
+        }
+    }
+}
+
 /// Structure principale du processeur NEC V60
 #[derive(Debug)]
 pub struct NecV60 {
@@ -46,6 +87,12 @@ pub struct NecV60 {
     
     /// État d'arrêt du processeur
     pub halted: bool,
+    
+    /// État des interruptions
+    pub interrupts_enabled: bool,
+    
+    /// File d'attente des interruptions pendantes
+    pub pending_interrupts: Vec<Interrupt>,
 }
 
 impl NecV60 {
@@ -57,6 +104,8 @@ impl NecV60 {
             cycle_count: 0,
             stats: ExecutionStats::new(),
             halted: false,
+            interrupts_enabled: true,
+            pending_interrupts: Vec::new(),
         }
     }
 
@@ -67,6 +116,8 @@ impl NecV60 {
         self.cycle_count = 0;
         self.stats.reset();
         self.halted = false;
+        self.interrupts_enabled = true;
+        self.pending_interrupts.clear();
     }
 
     /// Exécute un cycle du processeur
@@ -76,6 +127,11 @@ impl NecV60 {
     {
         if self.halted {
             return Ok(1); // Un cycle minimal si arrêté
+        }
+
+        // Vérifier et traiter les interruptions pendantes
+        if self.process_interrupts(memory)? {
+            return Ok(10); // Cycles pour le traitement d'interruption
         }
 
         // Récupérer l'instruction à l'adresse du PC
@@ -118,6 +174,90 @@ impl NecV60 {
             cycle_count: self.cycle_count,
             halted: self.halted,
         }
+    }
+    
+    /// Ajoute une interruption à la file d'attente
+    pub fn queue_interrupt(&mut self, interrupt: Interrupt) {
+        // Éviter les doublons
+        if !self.pending_interrupts.contains(&interrupt) {
+            self.pending_interrupts.push(interrupt);
+        }
+    }
+    
+    /// Traite les interruptions pendantes
+    pub fn process_interrupts<M>(&mut self, memory: &mut M) -> Result<bool>
+    where
+        M: crate::memory::MemoryInterface,
+    {
+        if !self.interrupts_enabled || self.pending_interrupts.is_empty() {
+            return Ok(false);
+        }
+        
+        // Traiter la première interruption de la file
+        if let Some(interrupt) = self.pending_interrupts.first().cloned() {
+            self.handle_interrupt(interrupt, memory)?;
+            self.pending_interrupts.remove(0);
+            return Ok(true);
+        }
+        
+        Ok(false)
+    }
+    
+    /// Gère une interruption spécifique
+    fn handle_interrupt<M>(&mut self, interrupt: Interrupt, memory: &mut M) -> Result<()>
+    where
+        M: crate::memory::MemoryInterface,
+    {
+        // Désactiver les interruptions pendant le traitement
+        let interrupts_were_enabled = self.interrupts_enabled;
+        self.interrupts_enabled = false;
+        
+        // Sauvegarder le PC et les flags sur la pile
+        let pc = self.registers.pc;
+        let flags = self.registers.psw.bits();
+        
+        // Empiler PC
+        self.registers.sp = self.registers.sp.wrapping_sub(4);
+        memory.write_u32(self.registers.sp, pc)?;
+        
+        // Empiler flags
+        self.registers.sp = self.registers.sp.wrapping_sub(4);
+        memory.write_u32(self.registers.sp, flags)?;
+        
+        // Charger l'adresse du gestionnaire d'interruption
+        let handler_address = interrupt.vector_address();
+        let handler = memory.read_u32(handler_address)?;
+        
+        // Sauter au gestionnaire
+        self.registers.pc = handler;
+        
+        // Restaurer l'état des interruptions si elles étaient activées
+        if interrupts_were_enabled {
+            self.interrupts_enabled = true;
+        }
+        
+        Ok(())
+    }
+    
+    /// Retourne d'une interruption
+    pub fn return_from_interrupt<M>(&mut self, memory: &mut M) -> Result<()>
+    where
+        M: crate::memory::MemoryInterface,
+    {
+        // Dépiler les flags
+        let flags = memory.read_u32(self.registers.sp)?;
+        self.registers.sp = self.registers.sp.wrapping_add(4);
+        self.registers.psw = ProcessorStatusWord::from_bits_truncate(flags);
+        
+        // Dépiler le PC
+        let pc = memory.read_u32(self.registers.sp)?;
+        self.registers.sp = self.registers.sp.wrapping_add(4);
+        self.registers.pc = pc;
+        
+        // Réactiver les interruptions
+        self.interrupts_enabled = true;
+        
+        Ok(())
     }
 }
 
