@@ -477,7 +477,10 @@ fn test_60fps_requirement() {
 
 ### ✅ Priorité 1 - Corrections Immédiates
 
-- [ ] **Corriger erreurs swap chain GPU** : Gérer les événements de redimensionnement fenêtre pour éviter les erreurs répétées
+- [x] **Corriger erreurs swap chain GPU** : Gérer les événements de redimensionnement fenêtre pour éviter les erreurs répétées
+  - Ajout de gestion des erreurs `SurfaceError::Lost` et `SurfaceError::Outdated`
+  - Reconfiguration automatique de la surface lors de ces erreurs
+  - Méthodes `render()`, `render_simple_triangles()` et `render_textured_triangles()` mises à jour
 - [ ] **Tester exécution CPU basique** : Créer des tests pour valider le décodeur et exécuteur d'instructions simples
 - [ ] **Implémenter rendu GPU** : Connecter le buffer de commandes GPU au système de rendu pour afficher des primitives
 

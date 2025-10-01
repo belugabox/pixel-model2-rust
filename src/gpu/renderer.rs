@@ -464,9 +464,17 @@ impl WgpuRenderer {
     }
     
     /// Rendu d'une frame
-    pub fn render(&self) -> Result<()> {
-        // Obtenir la texture de surface
-        let output = self.surface.get_current_texture()?;
+    pub fn render(&mut self) -> Result<()> {
+        // Obtenir la texture de surface - gérer les erreurs de surface
+        let output = match self.surface.get_current_texture() {
+            Ok(output) => output,
+            Err(SurfaceError::Lost | SurfaceError::Outdated) => {
+                // Reconfigurer la surface si elle est perdue ou obsolète
+                self.surface.configure(&self.device, &self.surface_config);
+                return Ok(());
+            }
+            Err(e) => return Err(anyhow!("Erreur de surface GPU: {:?}", e)),
+        };
         let view = output.texture.create_view(&TextureViewDescriptor::default());
         
         // Créer l'encodeur de commandes
@@ -505,7 +513,7 @@ impl WgpuRenderer {
     }
 
     /// Rendre des triangles simples sans textures
-    pub fn render_simple_triangles(&self, vertices: &[SimpleVertex]) -> Result<()> {
+    pub fn render_simple_triangles(&mut self, vertices: &[SimpleVertex]) -> Result<()> {
         if vertices.is_empty() || vertices.len() % 3 != 0 {
             return Ok(()); // Rien à rendre ou nombre de sommets invalide
         }
@@ -517,8 +525,16 @@ impl WgpuRenderer {
             usage: BufferUsages::VERTEX,
         });
 
-        // Obtenir la texture de surface
-        let output = self.surface.get_current_texture()?;
+        // Obtenir la texture de surface - gérer les erreurs de surface
+        let output = match self.surface.get_current_texture() {
+            Ok(output) => output,
+            Err(SurfaceError::Lost | SurfaceError::Outdated) => {
+                // Reconfigurer la surface si elle est perdue ou obsolète
+                self.surface.configure(&self.device, &self.surface_config);
+                return Ok(());
+            }
+            Err(e) => return Err(anyhow!("Erreur de surface GPU: {:?}", e)),
+        };
         let view = output.texture.create_view(&TextureViewDescriptor::default());
 
         // Créer l'encodeur de commandes
@@ -564,7 +580,7 @@ impl WgpuRenderer {
     }
 
     /// Rendre des triangles texturés
-    pub fn render_textured_triangles(&self, vertices: &[TexturedVertex], texture_view: &TextureView, bind_group: &BindGroup) -> Result<()> {
+    pub fn render_textured_triangles(&mut self, vertices: &[TexturedVertex], texture_view: &TextureView, bind_group: &BindGroup) -> Result<()> {
         if vertices.is_empty() || vertices.len() % 3 != 0 {
             return Ok(()); // Rien à rendre ou nombre de sommets invalide
         }
@@ -576,8 +592,16 @@ impl WgpuRenderer {
             usage: BufferUsages::VERTEX,
         });
 
-        // Obtenir la texture de surface
-        let output = self.surface.get_current_texture()?;
+        // Obtenir la texture de surface - gérer les erreurs de surface
+        let output = match self.surface.get_current_texture() {
+            Ok(output) => output,
+            Err(SurfaceError::Lost | SurfaceError::Outdated) => {
+                // Reconfigurer la surface si elle est perdue ou obsolète
+                self.surface.configure(&self.device, &self.surface_config);
+                return Ok(());
+            }
+            Err(e) => return Err(anyhow!("Erreur de surface GPU: {:?}", e)),
+        };
         let view = output.texture.create_view(&TextureViewDescriptor::default());
 
         // Créer l'encodeur de commandes
