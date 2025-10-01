@@ -1,0 +1,37 @@
+# Configuration de Pixel Model 2 Rust
+
+[video]
+resolution = "496x384"  # ou "640x480"
+fullscreen = false
+vsync = true
+texture_filtering = "linear"
+
+[audio]
+enabled = true
+volume = 1.0
+sample_rate = 44100
+
+[input.player1_keys]
+up = "W"
+down = "S"
+left = "A"
+right = "D"
+punch = "J"
+kick = "K"
+guard = "L"
+start = "Return"
+
+[input.player2_keys]
+up = "Up"
+down = "Down"
+left = "Left"
+right = "Right"
+punch = "Numpad1"
+kick = "Numpad2"
+guard = "Numpad3"
+start = "NumpadEnter"
+
+[emulation]
+cpu_speed_multiplier = 1.0
+accurate_timing = true
+debug_mode = false
