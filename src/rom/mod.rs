@@ -21,11 +21,8 @@ pub mod mapping;
 pub mod integration_tests;
 
 // Réexporter les types principaux pour faciliter l'utilisation
-pub use database::{GameDatabase, GameInfo, RomInfo, RomType};
-pub use decompression::{RomDecompressor, CompressionType};
-pub use validation::{RomValidator, ValidationResult};
-pub use loader::{RomManager, RomSet, LoadedRom, LoadConfig};
-pub use mapping::{RomMemoryMapper, Model2MemoryConfig, MappingInfo};
+pub use loader::RomManager;
+pub use mapping::{RomMemoryMapper, Model2MemoryConfig};
 
 /// Système de ROM complet pour SEGA Model 2
 /// 

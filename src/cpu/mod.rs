@@ -18,16 +18,8 @@ pub mod bcd;
 use anyhow::Result;
 
 pub use registers::*;
-pub use instructions::*;
 pub use instruction_formats::*;
-pub use decoder::*;
 pub use executor::*;
-pub use arithmetic::*;
-pub use logical::*;
-pub use floating_point::*;
-pub use bit_manipulation::*;
-pub use string_operations::*;
-pub use bcd::*;
 
 /// Types d'interruptions du SEGA Model 2
 #[repr(u8)]

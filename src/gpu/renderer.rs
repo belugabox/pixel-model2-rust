@@ -580,7 +580,7 @@ impl WgpuRenderer {
     }
 
     /// Rendre des triangles texturés
-    pub fn render_textured_triangles(&mut self, vertices: &[TexturedVertex], texture_view: &TextureView, bind_group: &BindGroup) -> Result<()> {
+    pub fn render_textured_triangles(&mut self, vertices: &[TexturedVertex], _texture_view: &TextureView, bind_group: &BindGroup) -> Result<()> {
         if vertices.is_empty() || vertices.len() % 3 != 0 {
             return Ok(()); // Rien à rendre ou nombre de sommets invalide
         }

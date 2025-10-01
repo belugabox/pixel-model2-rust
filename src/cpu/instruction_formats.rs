@@ -159,7 +159,7 @@ impl V60InstructionDecoder {
             },
 
             // Instructions Format 4 (32 bits) - branchements
-            0x30..=0x3F => {
+            0x30..=0x37 => {
                 if data.len() < 4 {
                     return Err(anyhow!("Données insuffisantes pour Format 4"));
                 }
@@ -228,7 +228,7 @@ impl V60InstructionDecoder {
     /// Décode Format 2 (avec immédiat)
     fn decode_format2(&self, opcode: u8, r2: u8, r1: u8, immediate: u16) -> Result<Instruction> {
         let dest = Operand::Register(r2 as usize);
-        let src = Operand::Register(r1 as usize);
+        let _src = Operand::Register(r1 as usize);
         let imm = Operand::Immediate(immediate as u32);
 
         match opcode {

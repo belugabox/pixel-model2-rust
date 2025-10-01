@@ -134,7 +134,7 @@ impl ScspAudio {
         
         let buffer_size = (sample_rate / 60) as usize * channels as usize; // Buffer pour ~1 frame à 60Hz
         
-        let mut audio = Self {
+        let audio = Self {
             sample_rate,
             channels,
             _stream: device.build_output_stream(
@@ -260,7 +260,7 @@ impl ScspAudio {
     }
     
     /// Génère un échantillon PCM avec données locales
-    fn generate_pcm_sample_from_data(&self, slot_regs: &SlotRegisters, position: f32) -> f32 {
+    fn generate_pcm_sample_from_data(&self, _slot_regs: &SlotRegisters, position: f32) -> f32 {
         let addr = position as usize;
         if addr < self.registers.wave_memory.len() {
             // Convertir u8 en f32 (-1.0 à 1.0)
@@ -308,7 +308,7 @@ impl ScspAudio {
                 continue;
             }
             
-            let slot_regs = &self.registers.slot_registers[slot_id];
+            let _slot_regs = &self.registers.slot_registers[slot_id];
             slot_state.envelope_counter += 1;
             
             match slot_state.envelope_phase {
@@ -467,7 +467,7 @@ impl ScspAudio {
     
     /// Obtient des données audio pour le callback
     pub fn get_audio_data(&mut self, buffer: &mut [f32]) {
-        for (i, sample) in buffer.iter_mut().enumerate() {
+        for (_i, sample) in buffer.iter_mut().enumerate() {
             *sample = self.output_buffer.pop_front().unwrap_or(0.0) * self.volume;
         }
     }

@@ -109,7 +109,7 @@ impl AppState {
             
             // Statistiques de performance
             if executed_cycles > 0 {
-                let fps = 60.0 * (executed_cycles as f32 / CYCLES_PER_FRAME as f32);
+                let _fps = 60.0 * (executed_cycles as f32 / CYCLES_PER_FRAME as f32);
                 let buffer_stats = self.app.memory.gpu_command_buffer.stats();
                 println!("GPU Buffer: {} lots traités, taille moyenne {:.1}, max {}", 
                         buffer_stats.batches_processed, buffer_stats.average_batch_size, buffer_stats.max_batch_size);
@@ -290,7 +290,7 @@ impl EmulatorApp {
                     // Gérer les événements GPU
                     if let Some(ref mut gpu) = gpu {
                         match event {
-                            WindowEvent::Resized(physical_size) => {
+                            WindowEvent::Resized(_physical_size) => {
                                 // Pour l'instant, garder la résolution standard
                                 let _ = gpu.resize(crate::gpu::Model2Resolution::Standard);
                             },

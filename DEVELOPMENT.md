@@ -491,6 +491,11 @@ fn test_60fps_requirement() {
   - Tests des structures Triangle3D, Model3D, BoundingBox
   - Tests de configuration de rendu et résolutions Model 2
   - Validation du pipeline de transformation 3D
+- [x] **Nettoyer warnings de compilation** : Réduit de 133 à 113 warnings
+  - Correction variables non utilisées (préfixage avec _)
+  - Correction méthode dépréciée md5::compute → finalize
+  - Correction pattern unreachable dans décodeur (0x30..=0x3F vs 0x38..=0x3F)
+  - Les warnings restants concernent du code future/non utilisé (normal pour un projet en développement)
 
 ### 📋 Priorité 2 - Fonctionnalités Core
 

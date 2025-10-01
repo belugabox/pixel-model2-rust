@@ -1,9 +1,7 @@
 //! Décodeur d'instructions NEC V60
 
 use super::instructions::*;
-use super::instruction_formats::*;
-use super::registers::*;
-use anyhow::{Result, anyhow};
+use anyhow::Result;
 
 /// Décode une instruction brute en instruction structurée
 pub fn decode_instruction(opcode: u32, address: u32) -> Result<DecodedInstruction> {

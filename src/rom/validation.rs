@@ -186,7 +186,7 @@ impl RomValidator {
     pub fn calculate_md5(data: &[u8]) -> String {
         let mut hasher = md5::Context::new();
         hasher.consume(data);
-        format!("{:x}", hasher.compute())
+        format!("{:x}", hasher.finalize())
     }
     
     /// Calcule le hash SHA256 d'un buffer

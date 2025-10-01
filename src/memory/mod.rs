@@ -93,7 +93,7 @@ impl GpuCommandBuffer {
     }
     
     /// Optimise l'ordre des commandes pour de meilleures performances
-    fn optimize_commands(&self, mut commands: Vec<GpuCommand>) -> Vec<GpuCommand> {
+    fn optimize_commands(&self, commands: Vec<GpuCommand>) -> Vec<GpuCommand> {
         // Stratégie d'optimisation avancée :
         // 1. Éliminer les commandes redondantes (mêmes matrices, mêmes états)
         // 2. Grouper les changements d'état
