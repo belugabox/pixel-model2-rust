@@ -5,20 +5,20 @@
 
 pub mod cpu;
 pub mod memory;
-// pub mod gpu; // Temporarily disabled
-pub mod audio; // Re-enabled after fixing compilation issues
+pub mod gpu;
+pub mod audio;
 pub mod input;
 pub mod rom;
-// pub mod gui; // Temporairement désactivé à cause des problèmes de lifetime
+pub mod gui;
 pub mod config;
 
 pub use cpu::*;
 pub use memory::*;
-// pub use gpu::*; // Temporarily disabled
-pub use audio::*; // Re-enabled
+pub use gpu::*;
+pub use audio::*;
 pub use input::*;
 pub use rom::*;
-// pub use gui::*; // Temporairement désactivé
+pub use gui::*;
 pub use config::*;
 
 /// Version de l'émulateur

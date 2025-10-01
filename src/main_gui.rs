@@ -11,7 +11,7 @@ mod rom;
 // mod gui; // Temporarily disabled
 mod config;
 
-use crate::gui::EmulatorApp;
+use pixel_model2_rust::gui::EmulatorApp;
 
 fn main() -> Result<()> {
     // Initialiser le logging

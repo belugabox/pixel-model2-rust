@@ -80,7 +80,7 @@ impl AppState {
     pub fn run_frame(&mut self, mut gpu: Option<&mut Model2Gpu>) -> Result<()> {
         if self.app.running && !self.app.paused {
             // Exécuter un frame d'émulation
-            const CYCLES_PER_FRAME: u32 = pixel_model2_rust::MAIN_CPU_FREQUENCY / 60; // 60 FPS
+            const CYCLES_PER_FRAME: u32 = crate::MAIN_CPU_FREQUENCY / 60; // 60 FPS
             let executed_cycles = self.app.cpu.run_cycles(CYCLES_PER_FRAME, &mut self.app.memory)?;
             
             // Mettre à jour les registres I/O avec les cycles exécutés
