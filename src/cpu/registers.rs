@@ -130,6 +130,9 @@ bitflags! {
         /// Supervisor mode - mode superviseur activé
         const SUPERVISOR = 1 << 15;
         
+        /// Parity flag - parité du résultat (nombre pair de bits à 1)
+        const PARITY = 1 << 4;
+        
         /// Debug mode - mode débogage activé
         const DEBUG = 1 << 16;
     }
@@ -157,6 +160,27 @@ impl ProcessorStatusWord {
         if overflow {
             self.insert(Self::OVERFLOW);
         }
+    }
+
+    /// Méthodes individuelles pour les flags (pour compatibility avec ArithmeticResult)
+    pub fn set_zero_flag(&mut self, value: bool) {
+        if value { self.insert(Self::ZERO); } else { self.remove(Self::ZERO); }
+    }
+    
+    pub fn set_negative_flag(&mut self, value: bool) {
+        if value { self.insert(Self::SIGN); } else { self.remove(Self::SIGN); }
+    }
+    
+    pub fn set_carry_flag(&mut self, value: bool) {
+        if value { self.insert(Self::CARRY); } else { self.remove(Self::CARRY); }
+    }
+    
+    pub fn set_overflow_flag(&mut self, value: bool) {
+        if value { self.insert(Self::OVERFLOW); } else { self.remove(Self::OVERFLOW); }
+    }
+    
+    pub fn set_parity_flag(&mut self, value: bool) {
+        if value { self.insert(Self::PARITY); } else { self.remove(Self::PARITY); }
     }
 
     /// Vérifie si une condition est vraie basée sur les flags

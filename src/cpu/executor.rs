@@ -1,135 +1,230 @@
-//! Exécuteur d'instructions NEC V60
+﻿//! Exécuteur d'instructions NEC V60
 
-use super::{NecV60, instructions::*, registers::ConditionCode};
+use super::{NecV60, instructions::*, registers::ConditionCode, arithmetic::ArithmeticUnit, logical::LogicalUnit};
 use crate::memory::MemoryInterface;
 use anyhow::{Result, anyhow};
 
+/// Statistiques d'exécution pour profilage
+#[derive(Debug, Default)]
+pub struct ExecutionStats {
+    pub instructions_executed: u64,
+    pub cycles_executed: u64,
+    pub branches_taken: u64,
+    pub memory_accesses: u64,
+    pub cache_hits: u64,
+    pub exceptions_raised: u64,
+}
+
+impl ExecutionStats {
+    pub fn new() -> Self {
+        Self::default()
+    }
+    
+    pub fn reset(&mut self) {
+        *self = Self::default();
+    }
+}
+
+/// Exceptions d'exécution
+#[derive(Debug, Clone)]
+pub enum ExecutionException {
+    DivisionByZero,
+    InvalidMemoryAccess,
+    UnknownInstruction,
+    StackOverflow,
+    StackUnderflow,
+    FloatingPointError,
+}
+
+impl std::fmt::Display for ExecutionException {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ExecutionException::DivisionByZero => write!(f, "Division par zéro"),
+            ExecutionException::InvalidMemoryAccess => write!(f, "Accès mémoire invalide"),
+            ExecutionException::UnknownInstruction => write!(f, "Instruction inconnue"),
+            ExecutionException::StackOverflow => write!(f, "Débordement de pile"),
+            ExecutionException::StackUnderflow => write!(f, "Pile vide"),
+            ExecutionException::FloatingPointError => write!(f, "Erreur de calcul flottant"),
+        }
+    }
+}
+
+impl std::error::Error for ExecutionException {}
+
 impl NecV60 {
-    /// Exécute une instruction décodée
+    /// Exécute une instruction décodée avec gestion avancée des erreurs et statistiques
     pub fn execute_instruction<M>(&mut self, instruction: &DecodedInstruction, memory: &mut M) -> Result<u32>
     where
         M: MemoryInterface,
     {
+        // Mise à jour des statistiques
+        self.stats.instructions_executed += 1;
+        self.stats.cycles_executed += instruction.cycles as u64;
+        
         match &instruction.instruction {
             // Instructions arithmétiques
             Instruction::Add { dest, src1, src2 } => {
+                // Compter les accès mémoire pour les lectures
+                self.count_memory_access(src1);
+                self.count_memory_access(src2);
+                
                 let val1 = self.read_operand(src1, memory)?;
                 let val2 = self.read_operand(src2, memory)?;
-                let (result, overflow) = val1.overflowing_add(val2);
-                let carry = result < val1; // Détection simple de retenue
+                let arithmetic_result = ArithmeticUnit::add(val1, val2);
                 
-                self.write_operand(dest, result, memory)?;
-                self.registers.psw.update_flags(result, carry, overflow);
+                self.write_operand(dest, arithmetic_result.value, memory)?;
+                arithmetic_result.update_psw(&mut self.registers.psw);
                 self.registers.pc += instruction.size;
+                
+                if arithmetic_result.overflow {
+                    self.stats.exceptions_raised += 1;
+                }
             },
             
             Instruction::Sub { dest, src1, src2 } => {
+                self.count_memory_access(src1);
+                self.count_memory_access(src2);
+                
                 let val1 = self.read_operand(src1, memory)?;
                 let val2 = self.read_operand(src2, memory)?;
-                let (result, overflow) = val1.overflowing_sub(val2);
-                let carry = val1 < val2; // Détection simple de retenue
+                let arithmetic_result = ArithmeticUnit::sub(val1, val2);
                 
-                self.write_operand(dest, result, memory)?;
-                self.registers.psw.update_flags(result, carry, overflow);
+                self.write_operand(dest, arithmetic_result.value, memory)?;
+                arithmetic_result.update_psw(&mut self.registers.psw);
                 self.registers.pc += instruction.size;
+                
+                if arithmetic_result.overflow {
+                    self.stats.exceptions_raised += 1;
+                }
             },
             
             Instruction::Mul { dest, src1, src2 } => {
-                let val1 = self.read_operand(src1, memory)? as u64;
-                let val2 = self.read_operand(src2, memory)? as u64;
-                let result = val1.wrapping_mul(val2);
-                let overflow = result > u32::MAX as u64;
+                self.count_memory_access(src1);
+                self.count_memory_access(src2);
                 
-                self.write_operand(dest, result as u32, memory)?;
-                self.registers.psw.update_flags(result as u32, false, overflow);
+                let val1 = self.read_operand(src1, memory)?;
+                let val2 = self.read_operand(src2, memory)?;
+                let arithmetic_result = ArithmeticUnit::mul(val1, val2);
+                
+                self.write_operand(dest, arithmetic_result.value, memory)?;
+                arithmetic_result.update_psw(&mut self.registers.psw);
                 self.registers.pc += instruction.size;
+                
+                if arithmetic_result.overflow {
+                    self.stats.exceptions_raised += 1;
+                }
             },
             
             Instruction::Div { dest, src1, src2 } => {
+                self.count_memory_access(src1);
+                self.count_memory_access(src2);
+                
                 let val1 = self.read_operand(src1, memory)?;
                 let val2 = self.read_operand(src2, memory)?;
                 
-                if val2 == 0 {
-                    return Err(anyhow!("Division par zéro"));
+                match ArithmeticUnit::div(val1, val2) {
+                    Ok(arithmetic_result) => {
+                        self.write_operand(dest, arithmetic_result.value, memory)?;
+                        arithmetic_result.update_psw(&mut self.registers.psw);
+                        self.registers.pc += instruction.size;
+                    }
+                    Err(_) => {
+                        self.stats.exceptions_raised += 1;
+                        return Err(ExecutionException::DivisionByZero.into());
+                    }
                 }
-                
-                let result = val1 / val2;
-                self.write_operand(dest, result, memory)?;
-                self.registers.psw.update_flags(result, false, false);
-                self.registers.pc += instruction.size;
             },
             
             // Instructions logiques
             Instruction::And { dest, src1, src2 } => {
+                self.count_memory_access(src1);
+                self.count_memory_access(src2);
+                
                 let val1 = self.read_operand(src1, memory)?;
                 let val2 = self.read_operand(src2, memory)?;
-                let result = val1 & val2;
+                let logical_result = LogicalUnit::and(val1, val2);
                 
-                self.write_operand(dest, result, memory)?;
-                self.registers.psw.update_flags(result, false, false);
+                self.write_operand(dest, logical_result.value, memory)?;
+                logical_result.update_psw(&mut self.registers.psw);
                 self.registers.pc += instruction.size;
             },
             
             Instruction::Or { dest, src1, src2 } => {
+                self.count_memory_access(src1);
+                self.count_memory_access(src2);
+                
                 let val1 = self.read_operand(src1, memory)?;
                 let val2 = self.read_operand(src2, memory)?;
-                let result = val1 | val2;
+                let logical_result = LogicalUnit::or(val1, val2);
                 
-                self.write_operand(dest, result, memory)?;
-                self.registers.psw.update_flags(result, false, false);
+                self.write_operand(dest, logical_result.value, memory)?;
+                logical_result.update_psw(&mut self.registers.psw);
                 self.registers.pc += instruction.size;
             },
             
             Instruction::Xor { dest, src1, src2 } => {
+                self.count_memory_access(src1);
+                self.count_memory_access(src2);
+                
                 let val1 = self.read_operand(src1, memory)?;
                 let val2 = self.read_operand(src2, memory)?;
-                let result = val1 ^ val2;
+                let logical_result = LogicalUnit::xor(val1, val2);
                 
-                self.write_operand(dest, result, memory)?;
-                self.registers.psw.update_flags(result, false, false);
+                self.write_operand(dest, logical_result.value, memory)?;
+                logical_result.update_psw(&mut self.registers.psw);
                 self.registers.pc += instruction.size;
             },
             
             Instruction::Not { dest, src } => {
-                let val = self.read_operand(src, memory)?;
-                let result = !val;
+                self.count_memory_access(src);
                 
-                self.write_operand(dest, result, memory)?;
-                self.registers.psw.update_flags(result, false, false);
+                let val = self.read_operand(src, memory)?;
+                let logical_result = LogicalUnit::not(val);
+                
+                self.write_operand(dest, logical_result.value, memory)?;
+                logical_result.update_psw(&mut self.registers.psw);
                 self.registers.pc += instruction.size;
             },
             
             // Instructions de décalage
             Instruction::Shl { dest, src, shift } => {
-                let val = self.read_operand(src, memory)?;
-                let shift_amount = self.read_operand(shift, memory)? & 0x1F; // Masquer à 5 bits
-                let result = val << shift_amount;
-                let carry = if shift_amount > 0 { (val >> (32 - shift_amount)) & 1 != 0 } else { false };
+                self.count_memory_access(src);
+                self.count_memory_access(shift);
                 
-                self.write_operand(dest, result, memory)?;
-                self.registers.psw.update_flags(result, carry, false);
+                let val = self.read_operand(src, memory)?;
+                let shift_amount = self.read_operand(shift, memory)?;
+                let logical_result = LogicalUnit::shl(val, shift_amount);
+                
+                self.write_operand(dest, logical_result.value, memory)?;
+                logical_result.update_psw(&mut self.registers.psw);
                 self.registers.pc += instruction.size;
             },
             
             Instruction::Shr { dest, src, shift } => {
-                let val = self.read_operand(src, memory)?;
-                let shift_amount = self.read_operand(shift, memory)? & 0x1F;
-                let result = val >> shift_amount;
-                let carry = if shift_amount > 0 { (val >> (shift_amount - 1)) & 1 != 0 } else { false };
+                self.count_memory_access(src);
+                self.count_memory_access(shift);
                 
-                self.write_operand(dest, result, memory)?;
-                self.registers.psw.update_flags(result, carry, false);
+                let val = self.read_operand(src, memory)?;
+                let shift_amount = self.read_operand(shift, memory)?;
+                let logical_result = LogicalUnit::shr(val, shift_amount);
+                
+                self.write_operand(dest, logical_result.value, memory)?;
+                logical_result.update_psw(&mut self.registers.psw);
                 self.registers.pc += instruction.size;
             },
             
             // Instructions de transfert
             Instruction::Mov { dest, src } => {
+                self.count_memory_access(src);
+                
                 let val = self.read_operand(src, memory)?;
                 self.write_operand(dest, val, memory)?;
                 self.registers.pc += instruction.size;
             },
             
             Instruction::Load { dest, address, size } => {
+                self.count_memory_access(address);
+                
                 let addr = self.read_operand(address, memory)?;
                 let val = match size {
                     DataSize::Byte => memory.read_u8(addr)? as u32,
@@ -141,6 +236,9 @@ impl NecV60 {
             },
             
             Instruction::Store { src, address, size } => {
+                self.count_memory_access(src);
+                self.count_memory_access(address);
+                
                 let val = self.read_operand(src, memory)?;
                 let addr = self.read_operand(address, memory)?;
                 match size {
@@ -153,20 +251,27 @@ impl NecV60 {
             
             // Instructions de branchement
             Instruction::Jump { target } => {
+                self.count_memory_access(target);
+                
                 let addr = self.read_operand(target, memory)?;
                 self.registers.pc = addr;
+                self.stats.branches_taken += 1;
             },
             
             Instruction::JumpConditional { condition, target } => {
                 if self.registers.psw.condition_met(*condition) {
+                    self.count_memory_access(target);
                     let addr = self.read_operand(target, memory)?;
                     self.registers.pc = addr;
+                    self.stats.branches_taken += 1;
                 } else {
                     self.registers.pc += instruction.size;
                 }
             },
             
             Instruction::Call { target } => {
+                self.count_memory_access(target);
+                
                 // Pousser l'adresse de retour sur la pile
                 self.registers.sp -= 4;
                 memory.write_u32(self.registers.sp, self.registers.pc + instruction.size)?;
@@ -185,6 +290,9 @@ impl NecV60 {
             
             // Instructions de comparaison
             Instruction::Compare { src1, src2 } => {
+                self.count_memory_access(src1);
+                self.count_memory_access(src2);
+                
                 let val1 = self.read_operand(src1, memory)?;
                 let val2 = self.read_operand(src2, memory)?;
                 let (result, overflow) = val1.overflowing_sub(val2);
@@ -196,6 +304,9 @@ impl NecV60 {
             },
             
             Instruction::Test { src1, src2 } => {
+                self.count_memory_access(src1);
+                self.count_memory_access(src2);
+                
                 let val1 = self.read_operand(src1, memory)?;
                 let val2 = self.read_operand(src2, memory)?;
                 let result = val1 & val2;
@@ -228,6 +339,9 @@ impl NecV60 {
             
             // Instructions flottantes (implémentation basique)
             Instruction::FloatAdd { dest, src1, src2 } => {
+                self.count_memory_access(src1);
+                self.count_memory_access(src2);
+                
                 // Conversion approximative pour les flottants
                 let val1 = f32::from_bits(self.read_operand(src1, memory)?);
                 let val2 = f32::from_bits(self.read_operand(src2, memory)?);
@@ -238,6 +352,9 @@ impl NecV60 {
             },
             
             Instruction::FloatMul { dest, src1, src2 } => {
+                self.count_memory_access(src1);
+                self.count_memory_access(src2);
+                
                 let val1 = f32::from_bits(self.read_operand(src1, memory)?);
                 let val2 = f32::from_bits(self.read_operand(src2, memory)?);
                 let result = val1 * val2;
@@ -255,65 +372,3 @@ impl NecV60 {
         
         Ok(instruction.cycles)
     }
-
-    /// Lit la valeur d'un opérande
-    fn read_operand<M>(&self, operand: &Operand, memory: &M) -> Result<u32>
-    where
-        M: MemoryInterface,
-    {
-        match operand {
-            Operand::Register(reg) => Ok(self.registers.read_general(*reg)),
-            Operand::Immediate(val) => Ok(*val),
-            Operand::Direct(addr) => memory.read_u32(*addr),
-            Operand::Indirect(reg) => {
-                let addr = self.registers.read_general(*reg);
-                memory.read_u32(addr)
-            },
-            Operand::IndirectOffset(reg, offset) => {
-                let base = self.registers.read_general(*reg);
-                let addr = (base as i32 + offset) as u32;
-                memory.read_u32(addr)
-            },
-            Operand::IndirectIndexed(base_reg, index_reg, scale) => {
-                let base = self.registers.read_general(*base_reg);
-                let index = self.registers.read_general(*index_reg);
-                let addr = base + (index * scale);
-                memory.read_u32(addr)
-            },
-            Operand::PcRelative(offset) => {
-                let addr = (self.registers.pc as i32 + offset) as u32;
-                memory.read_u32(addr)
-            },
-        }
-    }
-
-    /// Écrit une valeur dans un opérande
-    fn write_operand<M>(&mut self, operand: &Operand, value: u32, memory: &mut M) -> Result<()>
-    where
-        M: MemoryInterface,
-    {
-        match operand {
-            Operand::Register(reg) => {
-                self.registers.write_general(*reg, value);
-                Ok(())
-            },
-            Operand::Direct(addr) => memory.write_u32(*addr, value),
-            Operand::Indirect(reg) => {
-                let addr = self.registers.read_general(*reg);
-                memory.write_u32(addr, value)
-            },
-            Operand::IndirectOffset(reg, offset) => {
-                let base = self.registers.read_general(*reg);
-                let addr = (base as i32 + offset) as u32;
-                memory.write_u32(addr, value)
-            },
-            Operand::IndirectIndexed(base_reg, index_reg, scale) => {
-                let base = self.registers.read_general(*base_reg);
-                let index = self.registers.read_general(*index_reg);
-                let addr = base + (index * scale);
-                memory.write_u32(addr, value)
-            },
-            _ => Err(anyhow!("Impossible d'écrire dans cet opérande")),
-        }
-    }
-}

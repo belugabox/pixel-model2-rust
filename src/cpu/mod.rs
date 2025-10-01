@@ -8,6 +8,8 @@ pub mod instructions;
 pub mod instruction_formats;
 pub mod decoder;
 pub mod executor;
+pub mod arithmetic;
+pub mod logical;
 
 use anyhow::Result;
 
@@ -16,6 +18,8 @@ pub use instructions::*;
 pub use instruction_formats::*;
 pub use decoder::*;
 pub use executor::*;
+pub use arithmetic::*;
+pub use logical::*;
 
 /// Structure principale du processeur NEC V60
 #[derive(Debug)]
@@ -29,6 +33,9 @@ pub struct NecV60 {
     /// Compteur de cycles pour la synchronisation
     pub cycle_count: u64,
     
+    /// Statistiques d'exécution pour profilage
+    pub stats: ExecutionStats,
+    
     /// État d'arrêt du processeur
     pub halted: bool,
 }
@@ -40,6 +47,7 @@ impl NecV60 {
             registers: V60Registers::new(),
             decoder: V60InstructionDecoder::new(),
             cycle_count: 0,
+            stats: ExecutionStats::new(),
             halted: false,
         }
     }
@@ -49,6 +57,7 @@ impl NecV60 {
         self.registers.reset();
         self.decoder.clear_cache();
         self.cycle_count = 0;
+        self.stats.reset();
         self.halted = false;
     }
 
