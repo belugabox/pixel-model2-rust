@@ -481,7 +481,10 @@ fn test_60fps_requirement() {
   - Ajout de gestion des erreurs `SurfaceError::Lost` et `SurfaceError::Outdated`
   - Reconfiguration automatique de la surface lors de ces erreurs
   - Méthodes `render()`, `render_simple_triangles()` et `render_textured_triangles()` mises à jour
-- [ ] **Tester exécution CPU basique** : Créer des tests pour valider le décodeur et exécuteur d'instructions simples
+- [x] **Tester exécution CPU basique** : Créer des tests pour valider le décodeur et exécuteur d'instructions simples
+  - Création de 8 tests d'exécution CPU (tous passent ✅)
+  - Tests d'initialisation, reset, registres, mémoire, et cycles d'exécution
+  - Tests de validation de l'intégration CPU-mémoire
 - [ ] **Implémenter rendu GPU** : Connecter le buffer de commandes GPU au système de rendu pour afficher des primitives
 
 ### 📋 Priorité 2 - Fonctionnalités Core
