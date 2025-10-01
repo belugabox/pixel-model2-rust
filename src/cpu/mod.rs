@@ -10,6 +10,10 @@ pub mod decoder;
 pub mod executor;
 pub mod arithmetic;
 pub mod logical;
+pub mod floating_point;
+pub mod bit_manipulation;
+pub mod string_operations;
+pub mod bcd;
 
 use anyhow::Result;
 
@@ -20,6 +24,10 @@ pub use decoder::*;
 pub use executor::*;
 pub use arithmetic::*;
 pub use logical::*;
+pub use floating_point::*;
+pub use bit_manipulation::*;
+pub use string_operations::*;
+pub use bcd::*;
 
 /// Structure principale du processeur NEC V60
 #[derive(Debug)]

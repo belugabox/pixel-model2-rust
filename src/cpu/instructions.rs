@@ -42,6 +42,50 @@ pub enum Instruction {
     // Instructions spéciales V60
     FloatAdd { dest: Operand, src1: Operand, src2: Operand },
     FloatMul { dest: Operand, src1: Operand, src2: Operand },
+    FloatSub { dest: Operand, src1: Operand, src2: Operand },
+    FloatDiv { dest: Operand, src1: Operand, src2: Operand },
+    FloatCompare { src1: Operand, src2: Operand },
+    
+    // Instructions de rotation
+    RotateLeft { dest: Operand, src: Operand, count: Operand },
+    RotateRight { dest: Operand, src: Operand, count: Operand },
+    
+    // Instructions de manipulation de bits
+    BitTest { src: Operand, bit: Operand },
+    BitSet { dest: Operand, bit: Operand },
+    BitClear { dest: Operand, bit: Operand },
+    BitScan { dest: Operand, src: Operand },
+    
+    // Instructions de pile
+    Push { src: Operand },
+    Pop { dest: Operand },
+    PushMultiple { registers: Vec<usize> },
+    PopMultiple { registers: Vec<usize> },
+    
+    // Instructions de chaîne (string operations)
+    StringMove { size: DataSize },
+    StringCompare { size: DataSize },
+    StringScan { size: DataSize },
+    
+    // Instructions MMU et système avancées
+    LoadControlRegister { dest: Operand, control_reg: u8 },
+    StoreControlRegister { src: Operand, control_reg: u8 },
+    InvalidateTLB,
+    FlushCache,
+    
+    // Instructions d'interruption
+    SoftwareInterrupt { vector: u8 },
+    ReturnFromInterrupt,
+    EnableInterrupts,
+    DisableInterrupts,
+    
+    // Instructions de synchronization
+    TestAndSet { dest: Operand, src: Operand },
+    CompareAndSwap { dest: Operand, compare: Operand, new_value: Operand },
+    
+    // Instructions BCD (Binary Coded Decimal)
+    BcdAdd { dest: Operand, src1: Operand, src2: Operand },
+    BcdSub { dest: Operand, src1: Operand, src2: Operand },
     
     // Instruction inconnue/non implémentée
     Unknown { opcode: u32 },
@@ -142,7 +186,9 @@ fn estimate_cycles(instruction: &Instruction) -> u32 {
         
         // Instructions de déplacement - 3 cycles
         Instruction::Shl { .. } |
-        Instruction::Shr { .. } => 3,
+        Instruction::Shr { .. } |
+        Instruction::RotateLeft { .. } |
+        Instruction::RotateRight { .. } => 3,
         
         // Multiplication - 10 cycles
         Instruction::Mul { .. } => 10,
@@ -166,9 +212,49 @@ fn estimate_cycles(instruction: &Instruction) -> u32 {
         Instruction::Compare { .. } |
         Instruction::Test { .. } => 2,
         
-        // Instructions flottantes - 8 cycles
+        // Instructions flottantes - 8-12 cycles
         Instruction::FloatAdd { .. } |
-        Instruction::FloatMul { .. } => 8,
+        Instruction::FloatSub { .. } => 8,
+        Instruction::FloatMul { .. } => 10,
+        Instruction::FloatDiv { .. } => 15,
+        Instruction::FloatCompare { .. } => 6,
+        
+        // Instructions de manipulation de bits - 2-4 cycles
+        Instruction::BitTest { .. } |
+        Instruction::BitSet { .. } |
+        Instruction::BitClear { .. } => 2,
+        Instruction::BitScan { .. } => 4,
+        
+        // Instructions de pile - 2-5 cycles
+        Instruction::Push { .. } |
+        Instruction::Pop { .. } => 2,
+        Instruction::PushMultiple { registers } => 2 + registers.len() as u32,
+        Instruction::PopMultiple { registers } => 2 + registers.len() as u32,
+        
+        // Instructions de chaîne - 5-15 cycles selon la taille
+        Instruction::StringMove { .. } => 8,
+        Instruction::StringCompare { .. } => 10,
+        Instruction::StringScan { .. } => 12,
+        
+        // Instructions MMU et système - cycles élevés
+        Instruction::LoadControlRegister { .. } |
+        Instruction::StoreControlRegister { .. } => 15,
+        Instruction::InvalidateTLB => 25,
+        Instruction::FlushCache => 50,
+        
+        // Instructions d'interruption - cycles variables
+        Instruction::SoftwareInterrupt { .. } => 20,
+        Instruction::ReturnFromInterrupt => 15,
+        Instruction::EnableInterrupts |
+        Instruction::DisableInterrupts => 3,
+        
+        // Instructions de synchronisation - cycles élevés
+        Instruction::TestAndSet { .. } => 8,
+        Instruction::CompareAndSwap { .. } => 12,
+        
+        // Instructions BCD - cycles moyens
+        Instruction::BcdAdd { .. } |
+        Instruction::BcdSub { .. } => 6,
         
         // Instructions système
         Instruction::Halt => 1,

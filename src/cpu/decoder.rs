@@ -225,7 +225,12 @@ fn estimate_instruction_size(instruction: &Instruction) -> u32 {
         Instruction::Nop | 
         Instruction::Halt |
         Instruction::Return |
-        Instruction::InterruptReturn => 4,
+        Instruction::InterruptReturn |
+        Instruction::ReturnFromInterrupt |
+        Instruction::EnableInterrupts |
+        Instruction::DisableInterrupts |
+        Instruction::InvalidateTLB |
+        Instruction::FlushCache => 4,
         
         // Instructions avec opérandes - 4 à 8 octets
         Instruction::Add { .. } |
@@ -242,16 +247,45 @@ fn estimate_instruction_size(instruction: &Instruction) -> u32 {
         Instruction::Compare { .. } |
         Instruction::Test { .. } |
         Instruction::FloatAdd { .. } |
-        Instruction::FloatMul { .. } => 8,
+        Instruction::FloatMul { .. } |
+        Instruction::FloatSub { .. } |
+        Instruction::FloatDiv { .. } |
+        Instruction::FloatCompare { .. } |
+        Instruction::RotateLeft { .. } |
+        Instruction::RotateRight { .. } |
+        Instruction::BitTest { .. } |
+        Instruction::BitSet { .. } |
+        Instruction::BitClear { .. } |
+        Instruction::BitScan { .. } |
+        Instruction::BcdAdd { .. } |
+        Instruction::BcdSub { .. } |
+        Instruction::TestAndSet { .. } |
+        Instruction::CompareAndSwap { .. } => 8,
         
         // Instructions mémoire - taille variable
         Instruction::Load { .. } |
-        Instruction::Store { .. } => 8,
+        Instruction::Store { .. } |
+        Instruction::LoadControlRegister { .. } |
+        Instruction::StoreControlRegister { .. } => 8,
+        
+        // Instructions de pile - 4 à 8 octets
+        Instruction::Push { .. } |
+        Instruction::Pop { .. } => 6,
+        Instruction::PushMultiple { registers } => 4 + (registers.len() as u32 / 8) * 4,
+        Instruction::PopMultiple { registers } => 4 + (registers.len() as u32 / 8) * 4,
+        
+        // Instructions de chaîne - taille fixe
+        Instruction::StringMove { .. } |
+        Instruction::StringCompare { .. } |
+        Instruction::StringScan { .. } => 8,
         
         // Instructions de branchement - taille variable
         Instruction::Jump { .. } |
         Instruction::JumpConditional { .. } |
         Instruction::Call { .. } => 8,
+        
+        // Instructions d'interruption
+        Instruction::SoftwareInterrupt { .. } => 6,
         
         // Instruction inconnue - 4 octets par défaut
         Instruction::Unknown { .. } => 4,

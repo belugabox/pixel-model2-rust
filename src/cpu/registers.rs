@@ -58,9 +58,8 @@ impl V60Registers {
 
     /// Écrit dans un registre général par son index
     pub fn write_general(&mut self, index: usize, value: u32) {
-        if index < 32 && index != 0 {
-            // R0 est toujours 0 sur certains processeurs RISC,
-            // mais le V60 permet d'écrire dans R0
+        if index < 32 {
+            // Le NEC V60 permet d'écrire dans tous les registres, y compris R0
             self.general[index] = value;
         }
     }
