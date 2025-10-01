@@ -17,9 +17,6 @@ pub mod validation;
 pub mod loader;
 pub mod mapping;
 
-#[cfg(test)]
-pub mod integration_tests;
-
 // Réexporter les types principaux pour faciliter l'utilisation
 pub use database::{GameDatabase, GameInfo, RomInfo, RomType};
 pub use decompression::{RomDecompressor, CompressionType};
@@ -93,9 +90,17 @@ impl Model2RomSystem {
         
         Ok(report)
     }
+        for search_path in &self.search_paths {
+            let full_path = Path::new(search_path).join(rom_name);
+            if full_path.exists() {
+                return Ok(Some(full_path.to_string_lossy().to_string()));
+            }
+        }
+        Ok(None)
+    }
 }
 
-impl Default for Model2RomSystem {
+impl Default for RomLoader {
     fn default() -> Self {
         Self::new()
     }

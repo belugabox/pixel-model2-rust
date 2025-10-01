@@ -78,7 +78,7 @@ impl<'window> Model2Gpu<'window> {
         let (width, height) = Model2Resolution::Standard.dimensions();
         
         Ok(Self {
-            geometry_processor: GeometryProcessor::new(),
+            geometry_processor: GeometryProcessor::new(width, height),
             texture_manager: TextureManager::new(renderer.device.clone(), renderer.queue.clone()),
             framebuffer: Framebuffer::new(&renderer.device, width, height),
             renderer,
