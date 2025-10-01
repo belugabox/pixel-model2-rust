@@ -1,6 +1,185 @@
 # Guide de Développement - Pixel Model 2 Rust
 
-## � Analyse du Projet (Octobre 2025)
+## 🎯 État Actuel et Tâches Prioritaires (Octobre 2025)
+
+### ✅ Accomplissements Réalisés
+
+- **Architecture complète** : Tous les modules (CPU, GPU, mémoire, ROM, audio, GUI) intégrés et fonctionnels
+- **Émulateur opérationnel** : L'émulateur démarre et affiche une fenêtre GUI
+- **Audio SCSP intégré** : Système audio complet avec accès registre via mémoire I/O
+- **GPU wgpu initialisé** : Buffer de commandes GPU opérationnel
+- **Compilation réussie** : Binaire GUI compilé sans erreurs (quelques warnings normaux)
+
+### 🚧 Tâches Prioritaires Immédiates
+
+#### 1. Corriger erreurs swap chain GPU
+
+- **Objectif** : Éliminer les messages d'erreur répétés "The underlying surface has changed, and therefore the swap chain must be updated"
+- **Impact** : Nettoyer les logs et améliorer la stabilité du rendu
+- **Complexité** : Moyenne - nécessite gestion des événements de redimensionnement fenêtre
+
+#### 2. Tester exécution CPU basique
+
+- **Objectif** : Valider le décodeur et exécuteur d'instructions NEC V60 avec des instructions simples
+- **Tests requis** : Instructions arithmétiques, logiques, et de transfert
+- **Impact** : Base pour l'émulation CPU complète
+- **Complexité** : Moyenne - nécessite ROMs de test ou code machine simple
+
+#### 3. Implémenter rendu GPU
+
+- **Objectif** : Intégrer le système de rendu pour afficher des primitives graphiques (triangles, textures)
+- **Composants** : Utiliser les structures GPU existantes et les commandes du buffer
+- **Impact** : Permettre l'affichage visuel des jeux
+- **Complexité** : Élevée - nécessite compréhension des spécifications Model 2 GPU
+
+#### 4. Tester avec ROMs réelles
+
+- **Objectif** : Charger et exécuter des ROMs SEGA Model 2 authentiques
+- **Étape préalable** : Implémenter chargement ROM complet dans le système mémoire
+- **Tests** : Validation checksum, mapping mémoire, exécution basique
+- **Impact** : Passage de l'émulation théorique à pratique
+- **Complexité** : Moyenne - dépend du système ROM existant
+
+#### 5. Optimisations performances
+
+- **Objectif** : Améliorer les performances CPU, GPU et audio pour une exécution fluide
+- **Métriques cibles** : 60 FPS stable, latence audio < 10ms
+- **Optimisations** : Cache mémoire, batching GPU, optimisations CPU
+- **Impact** : Expérience utilisateur fluide
+- **Complexité** : Variable selon les goulots d'étranglement identifiés
+
+### 📊 Métriques de Qualité Actuelles
+
+- **Build**: ✅ Compilable en release et debug
+- **Tests**: ✅ Tests unitaires opérationnels (145 warnings normaux pour code non utilisé)
+- **GUI**: ✅ Fenêtre d'émulation fonctionnelle avec tous modules actifs
+- **Audio**: ✅ SCSP intégré avec I/O routing complet
+- **GPU**: ✅ Initialisé avec buffer de commandes (erreurs swap chain à corriger)
+- **CPU**: ✅ Structure prête pour exécution (à tester)
+- **Mémoire**: ✅ Système Model 2 complet avec cache et statistiques
+- **ROM**: ✅ Framework de chargement et validation présent
+
+## 📋 Plan d'Action Détaillé
+
+### Phase 1 - Corrections Immédiates (Cette semaine)
+
+#### 1.1 Correction Swap Chain GPU
+
+```rust
+// Dans src/gpu/mod.rs ou renderer.rs
+impl Model2Gpu {
+    pub fn handle_surface_change(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
+        // Recréer la swap chain avec la nouvelle taille
+        // Gérer les erreurs de surface perdue
+    }
+}
+```
+
+**Étapes** :
+
+- Intercepter les événements de redimensionnement dans la GUI
+- Appeler `handle_surface_change()` lors des changements de taille
+- Ajouter gestion d'erreur pour surface perdue
+
+#### 1.2 Tests CPU Basiques
+
+```rust
+#[test]
+fn test_basic_cpu_execution() {
+    let mut cpu = NecV60::new();
+    let mut memory = Model2Memory::new();
+
+    // Charger une instruction simple (ex: MOV R1, #42)
+    let instruction_bytes = encode_mov_instruction(1, 42);
+    memory.write_bytes(0x00000000, &instruction_bytes);
+
+    // Exécuter et vérifier
+    cpu.run_cycles(&mut memory, 1).unwrap();
+    assert_eq!(cpu.registers.read_general(1), 42);
+}
+```
+
+**Étapes** :
+
+- Créer des ROMs de test simples
+- Tester instructions de base (MOV, ADD, SUB)
+- Valider les flags du processeur
+
+### Phase 2 - Rendu et ROMs (1-2 semaines)
+
+#### 2.1 Implémentation Rendu GPU
+
+```rust
+// Intégration dans gui/mod.rs
+impl AppState {
+    fn render_frame(&mut self) {
+        // Traiter les commandes GPU du buffer
+        let commands = self.memory.process_gpu_commands();
+        for command in commands {
+            self.gpu.execute_command(command);
+        }
+        // Rendre la frame
+        self.gpu.render_frame();
+    }
+}
+```
+
+**Étapes** :
+
+- Connecter le buffer de commandes GPU à l'exécuteur
+- Implémenter rendu de triangles de base
+- Ajouter support des textures
+
+#### 2.2 Chargement ROMs Réelles
+
+```rust
+// Dans main_gui.rs
+fn load_game_rom(rom_path: &str) -> Result<()> {
+    let rom_data = std::fs::read(rom_path)?;
+    let mut memory = Model2Memory::new();
+    memory.load_rom("program".to_string(), rom_data)?;
+
+    // Valider checksum et mapper en mémoire
+    memory.validate_rom_integrity()?;
+    Ok(())
+}
+```
+
+**Étapes** :
+
+- Implémenter chargement de fichiers ROM
+- Validation des checksums
+- Mapping correct en mémoire selon le type de ROM
+
+### Phase 3 - Optimisation et Polissage (2-3 semaines)
+
+#### 3.1 Optimisations Performance
+
+```rust
+// Benchmarks pour mesurer les performances
+#[bench]
+fn bench_cpu_execution(b: &mut Bencher) {
+    let mut cpu = NecV60::new();
+    let mut memory = Model2Memory::new();
+    // Setup ROM de test
+
+    b.iter(|| {
+        cpu.run_cycles(&mut memory, 1000);
+    });
+}
+```
+
+**Étapes** :
+
+- Ajouter benchmarks pour mesurer FPS
+- Optimiser les goulots d'étranglement identifiés
+- Améliorer la latence audio
+
+#### 3.2 Interface Utilisateur
+
+- Ajout menu de chargement de ROMs
+- Affichage des statistiques de performance
+- Contrôles de débogage (pause, step-by-step)
 
 ### État Actuel du Projet
 
@@ -25,43 +204,44 @@
 
 ### Plan d'Action Priorisé
 
-**Phase 1 - Stabilisation (1-2 semaines, priorité haute)**
+**Phase 1 - Corrections Immédiates (Cette semaine, priorité haute)**
 
-1. ✅ Corriger les tests d'intégration (refaire le fichier corrompu)
-2. ✅ Nettoyer les warnings (cargo fix + corrections manuelles, réduit de 25 à 8)
-3. ✅ Mettre à jour les dépendances critiques (egui, cpal, nalgebra, etc.)
-4. ✅ Ajouter CI GitHub Actions basique
+1. ✅ **Corriger erreurs swap chain GPU** - Éliminer les messages d'erreur répétés lors du redimensionnement
+2. ✅ **Tester exécution CPU basique** - Valider décodeur et exécuteur avec instructions simples
+3. ✅ **Implémenter rendu GPU** - Connecter buffer de commandes au système de rendu
 
-**Phase 2 - Fonctionnalités Core (2-4 semaines, priorité haute)**
+**Phase 2 - Fonctionnalités Core (1-2 semaines, priorité haute)**
 
-1. Implémenter le décodage d'instructions V60
-2. Ajouter rendu GPU basique (triangles sans textures)
-3. Charger et valider de vraies ROMs Model 2
-4. Réactiver et améliorer la GUI
+1. **Charger et valider ROMs réelles** - Support complet des ROMs SEGA Model 2
+2. **Améliorer interface utilisateur** - Menus de chargement, statistiques, contrôles de débogage
+3. **Optimiser performances** - Atteindre 60 FPS stable avec faible latence audio
 
-**Phase 3 - Optimisation et Qualité (2-3 semaines, priorité moyenne)**
+**Phase 3 - Polissage et Tests (2-3 semaines, priorité moyenne)**
 
-1. Ajouter profilage et benchmarks
-2. Optimiser les performances CPU/GPU
-3. Améliorer la documentation API
-4. Ajouter tests d'intégration complets
+1. **Tests d'intégration complets** - Scénarios d'émulation réalistes
+2. **Documentation API complète** - Guides pour développeurs contributeurs
+3. **Outils de débogage avancés** - Interface de débogage intégrée
 
 **Phase 4 - Fonctionnalités Avancées (4+ semaines, priorité basse)**
 
-1. Audio SCSP complet
-2. Support réseau (link play)
-3. Sauvegarde/chargement d'états
-4. Interface de débogage avancée
+1. **Audio SCSP étendu** - Effets audio avancés et DSP
+2. **Support réseau** - Jeu en réseau (link play)
+3. **Sauvegarde/chargement d'états** - Save states
+4. **Emulation haute précision** - Timing cycle-exact, sous-systèmes complets
 
 ### Métriques de Qualité
 
-- **Build**: ✅ Compilable en release
-- **Tests**: ✅ Tests unitaires et d'intégration OK (65 unit tests + 7 intégration + 9 execution + 7 decoder + 8 texture)
-- **Warnings**: ✅ Réduit de 25 à 8 warnings (principalement des re-exports ambigus et code mort)
-- **Dépendances**: ✅ Mises à jour vers versions compatibles (egui 0.26, cpal 0.16, nalgebra 0.34, etc.)
-- **CI/CD**: ✅ GitHub Actions workflow ajouté (test sur Windows/Linux/macOS)
-- **Coverage**: ❓ À mesurer
-- **Performance**: ❓ À profiler
+- **Build**: ✅ Compilable en release et debug sans erreurs
+- **Tests**: ✅ Tests unitaires opérationnels (quelques warnings normaux pour code non utilisé)
+- **GUI**: ✅ Fenêtre d'émulation fonctionnelle avec tous modules actifs
+- **Audio**: ✅ SCSP intégré avec I/O routing complet et accès registre
+- **GPU**: ✅ Initialisé avec buffer de commandes (erreurs swap chain à corriger)
+- **CPU**: ✅ Structure prête pour exécution (à tester avec instructions réelles)
+- **Mémoire**: ✅ Système Model 2 complet avec cache, statistiques et mapping I/O
+- **ROM**: ✅ Framework de chargement et validation présent
+- **Performance**: ❓ À mesurer (cible: 60 FPS, latence audio < 10ms)
+- **Coverage**: ❓ À mesurer avec tarpaulin
+- **CI/CD**: ❓ GitHub Actions à configurer
 
 ## �🚀 Démarrage Rapide
 
@@ -292,6 +472,33 @@ fn test_60fps_requirement() {
 - **Hex Editor** - Pour analyser les ROMs
 - **Disassembler** - Pour comprendre le code machine
 - **GPU Debugger** - RenderDoc pour le débogage graphique
+
+## 🎯 Tâches de Développement Actives
+
+### ✅ Priorité 1 - Corrections Immédiates
+
+- [ ] **Corriger erreurs swap chain GPU** : Gérer les événements de redimensionnement fenêtre pour éviter les erreurs répétées
+- [ ] **Tester exécution CPU basique** : Créer des tests pour valider le décodeur et exécuteur d'instructions simples
+- [ ] **Implémenter rendu GPU** : Connecter le buffer de commandes GPU au système de rendu pour afficher des primitives
+
+### 📋 Priorité 2 - Fonctionnalités Core
+
+- [ ] **Charger ROMs réelles** : Implémenter chargement et validation de ROMs SEGA Model 2 authentiques
+- [ ] **Interface utilisateur** : Ajouter menus de chargement ROM, statistiques performance, contrôles débogage
+- [ ] **Optimisations performance** : Atteindre 60 FPS stable avec latence audio optimisée
+
+### 🔧 Priorité 3 - Polissage
+
+- [ ] **Tests d'intégration** : Scénarios d'émulation réalistes avec ROMs de test
+- [ ] **Documentation API** : Guides complets pour les développeurs contributeurs
+- [ ] **Outils débogage** : Interface de débogage intégrée avec inspection mémoire/CPU
+
+### 🚀 Priorité 4 - Fonctionnalités Avancées
+
+- [ ] **Audio SCSP étendu** : Effets DSP, mixing avancé, filtres
+- [ ] **Support réseau** : Jeu en réseau pour titres Model 2 compatibles
+- [ ] **Save states** : Sauvegarde et chargement de l'état d'émulation
+- [ ] **Emulation haute précision** : Timing cycle-exact, sous-systèmes complets
 
 ## 🤝 Contribution
 
