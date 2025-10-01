@@ -1,6 +1,4 @@
 use pixel_model2_rust::*;
-use std::thread;
-use std::time::Duration;
 
 fn main() -> anyhow::Result<()> {
     println!("🎮 SEGA Model 2 Emulator v0.1.0");

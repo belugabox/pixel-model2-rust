@@ -13,9 +13,9 @@ categories = ["games", "emulators"]
 # Graphics and rendering
 wgpu = "0.19"
 winit = "0.29"
-pollster = "0.3"
+pollster = "0.4"
 bytemuck = { version = "1.14", features = ["derive"] }
-image = "0.24"
+image = "0.25"
 
 # GUI
 egui = "0.26"
@@ -23,12 +23,12 @@ egui-wgpu = "0.26"
 egui-winit = "0.26"
 
 # Audio
-cpal = "0.15"
-rubato = "0.14"
+cpal = "0.16"
+rubato = "0.16"
 
 # Math and utilities
-glam = "0.25"
-nalgebra = "0.32"
+glam = "0.30"
+nalgebra = "0.34"
 num-traits = "0.2"
 bitflags = "2.4"
 
@@ -40,7 +40,7 @@ bincode = "1.3"
 
 # Logging and debugging
 log = "0.4"
-env_logger = "0.10"
+env_logger = "0.11"
 anyhow = "1.0"
 thiserror = "1.0"
 
@@ -56,7 +56,7 @@ memmap2 = "0.9"
 zip = "0.6"
 flate2 = "1.0"
 crc32fast = "1.3"
-md5 = "0.7"
+md5 = "0.8"
 sha2 = "0.10"
 walkdir = "2.4"
 

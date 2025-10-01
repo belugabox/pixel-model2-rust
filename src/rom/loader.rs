@@ -6,9 +6,8 @@ use std::collections::HashMap;
 use walkdir::WalkDir;
 
 use super::database::{GameDatabase, GameInfo, RomInfo, RomType};
-use super::decompression::{RomDecompressor, DecompressionResult};
+use super::decompression::RomDecompressor;
 use super::validation::{RomValidator, ValidationResult};
-use crate::memory::MemoryInterface;
 
 /// Gestionnaire principal de ROMs
 pub struct RomManager {

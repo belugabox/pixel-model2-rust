@@ -13,8 +13,6 @@ pub mod shaders;
 pub mod framebuffer;
 
 use anyhow::Result;
-use wgpu::{Device, Queue, Surface, SurfaceConfiguration};
-use winit::window::Window;
 
 pub use renderer::*;
 pub use geometry::*;

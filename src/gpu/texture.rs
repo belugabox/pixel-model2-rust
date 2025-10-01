@@ -3,7 +3,7 @@
 //! Implémente le chargement et la gestion des textures avec support des formats
 //! propriétaires SEGA : 4bpp, 8bpp, 16bpp avec palettes.
 
-use anyhow::{Result, anyhow};
+use anyhow::Result;
 use wgpu::*;
 use std::collections::HashMap;
 use std::sync::Arc;

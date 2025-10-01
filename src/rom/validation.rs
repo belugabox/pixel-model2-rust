@@ -1,6 +1,6 @@
 //! Système de validation et vérification des ROMs
 
-use anyhow::{Result, anyhow};
+use anyhow::Result;
 use crc32fast::Hasher;
 use sha2::{Sha256, Digest};
 use super::database::{RomInfo, GameInfo};
@@ -138,7 +138,7 @@ impl RomValidator {
                 results.push((required_rom.filename.clone(), validation));
             } else {
                 // ROM manquante
-                let mut missing_result = ValidationResult {
+                let missing_result = ValidationResult {
                     is_valid: false,
                     calculated_crc32: 0,
                     calculated_md5: String::new(),

@@ -3,7 +3,7 @@
 use anyhow::{Result, anyhow};
 use std::collections::HashMap;
 
-use super::loader::{RomSet, LoadedRom, MemoryRegion};
+use super::loader::{RomSet, LoadedRom};
 use super::database::RomType;
 use crate::memory::MemoryInterface;
 
@@ -161,7 +161,7 @@ impl RomMemoryMapper {
     }
     
     /// Configure le mapping spécifique aux ROMs programme
-    fn setup_program_rom_mapping(&self, base_address: u32, data: &[u8], memory: &mut dyn MemoryInterface) -> Result<()> {
+    fn setup_program_rom_mapping(&self, base_address: u32, data: &[u8], _memory: &mut dyn MemoryInterface) -> Result<()> {
         // Configuration pour CPU 68000
         println!("Configuration ROM programme à 0x{:08X}", base_address);
         
@@ -185,7 +185,7 @@ impl RomMemoryMapper {
     }
     
     /// Configure le mapping spécifique aux ROMs graphiques
-    fn setup_graphics_rom_mapping(&self, base_address: u32, data: &[u8], memory: &mut dyn MemoryInterface) -> Result<()> {
+    fn setup_graphics_rom_mapping(&self, base_address: u32, data: &[u8], _memory: &mut dyn MemoryInterface) -> Result<()> {
         println!("Configuration ROM graphiques à 0x{:08X}", base_address);
         
         // Analyser les données graphiques
@@ -211,7 +211,7 @@ impl RomMemoryMapper {
     }
     
     /// Configure le mapping spécifique aux ROMs audio
-    fn setup_audio_rom_mapping(&self, base_address: u32, data: &[u8], memory: &mut dyn MemoryInterface) -> Result<()> {
+    fn setup_audio_rom_mapping(&self, base_address: u32, data: &[u8], _memory: &mut dyn MemoryInterface) -> Result<()> {
         println!("Configuration ROM audio à 0x{:08X}", base_address);
         
         // Détecter le format audio (PCM, ADPCM, etc.)
@@ -227,7 +227,7 @@ impl RomMemoryMapper {
     }
     
     /// Configure le mapping spécifique aux ROMs données
-    fn setup_data_rom_mapping(&self, base_address: u32, data: &[u8], memory: &mut dyn MemoryInterface) -> Result<()> {
+    fn setup_data_rom_mapping(&self, base_address: u32, data: &[u8], _memory: &mut dyn MemoryInterface) -> Result<()> {
         println!("Configuration ROM données à 0x{:08X}", base_address);
         
         // Analyser le type de données
@@ -295,7 +295,7 @@ impl RomMemoryMapper {
     
     /// Remappe les ROMs actuelles (après changement de configuration)
     fn remap_current_roms(&mut self) -> Result<()> {
-        if let Some(rom_set) = &self.current_rom_set {
+        if let Some(_rom_set) = &self.current_rom_set {
             // Pour une implémentation complète, on aurait besoin d'une référence au système mémoire
             println!("Remapping nécessaire après changement de configuration");
             // self.load_rom_set(rom_set.clone(), memory)?;

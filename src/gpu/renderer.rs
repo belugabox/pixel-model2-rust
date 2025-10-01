@@ -259,7 +259,7 @@ impl<'window> WgpuRenderer<'window> {
         
         // Pass de rendu de base
         {
-            let render_pass = encoder.begin_render_pass(&RenderPassDescriptor {
+            let _render_pass = encoder.begin_render_pass(&RenderPassDescriptor {
                 label: Some("Blit Pass"),
                 color_attachments: &[Some(RenderPassColorAttachment {
                     view: &view,

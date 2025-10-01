@@ -1,6 +1,6 @@
 //! Opérations logiques et binaires pour le NEC V60
 
-use super::{arithmetic::ArithmeticResult, registers::ProcessorStatusWord};
+use super::arithmetic::ArithmeticResult;
 
 /// Unité logique et binaire pour le NEC V60
 pub struct LogicalUnit;

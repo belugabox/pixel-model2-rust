@@ -68,7 +68,7 @@ impl Framebuffer {
         self.depth_data.fill(1.0);
     }
     
-    pub fn rasterize_triangle(&mut self, triangle: &TransformedTriangle, _texture_manager: &TextureManager) -> Result<()> {
+    pub fn rasterize_triangle(&mut self, _triangle: &TransformedTriangle, _texture_manager: &TextureManager) -> Result<()> {
         // Rasterisation software simple pour l'émulation précise
         // Implementation simplifiée pour la démo
         Ok(())
