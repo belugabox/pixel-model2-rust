@@ -86,13 +86,21 @@ impl AppState {
             // Mettre à jour les registres I/O avec les cycles exécutés
             self.app.memory.update_io_registers(executed_cycles, &mut self.app.cpu);
             
-            // Traiter les commandes GPU
-            let commands = self.app.memory.process_gpu_commands();
-            for command in commands {
+            // Traiter les commandes GPU par lots
+            let command_batches = self.app.memory.process_gpu_commands();
+            if !command_batches.is_empty() {
                 if let Some(gpu_ref) = gpu.as_mut() {
-                    self.process_gpu_command(&command, gpu_ref)?;
+                    self.process_gpu_command_batch(&command_batches, gpu_ref)?;
                 } else {
-                    println!("GPU: Commande reçue mais GPU non initialisé: {:?}", command);
+                    println!("GPU: {} commandes reçues mais GPU non initialisé", command_batches.len());
+                }
+            }
+            
+            // Forcer le vidage du buffer à la fin du frame pour synchronisation
+            let remaining_commands = self.app.memory.flush_gpu_command_buffer();
+            if !remaining_commands.is_empty() {
+                if let Some(gpu_ref) = gpu.as_mut() {
+                    self.process_gpu_command_batch(&remaining_commands, gpu_ref)?;
                 }
             }
             
@@ -102,8 +110,9 @@ impl AppState {
             // Statistiques de performance
             if executed_cycles > 0 {
                 let fps = 60.0 * (executed_cycles as f32 / CYCLES_PER_FRAME as f32);
-                println!("Frame exécuté: {} cycles, {:.1} FPS effectifs, {} commandes GPU", 
-                        executed_cycles, fps, self.app.memory.gpu_command_count());
+                let buffer_stats = self.app.memory.gpu_command_buffer.stats();
+                println!("GPU Buffer: {} lots traités, taille moyenne {:.1}, max {}", 
+                        buffer_stats.batches_processed, buffer_stats.average_batch_size, buffer_stats.max_batch_size);
             }
         }
         Ok(())
@@ -161,6 +170,18 @@ impl AppState {
                 println!("GPU: Commande non implémentée: {:?}", command);
             }
         }
+        Ok(())
+    }
+    
+    /// Traite un lot de commandes GPU de manière optimisée
+    fn process_gpu_command_batch(&mut self, commands: &[GpuCommand], gpu: &mut Model2Gpu) -> Result<()> {
+        println!("GPU: Traitement d'un lot de {} commandes", commands.len());
+        
+        // Traiter les commandes par lot pour de meilleures performances
+        for command in commands {
+            self.process_gpu_command(command, gpu)?;
+        }
+        
         Ok(())
     }
     

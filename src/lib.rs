@@ -5,8 +5,8 @@
 
 pub mod cpu;
 pub mod memory;
-pub mod gpu;
-pub mod audio;
+// pub mod gpu; // Temporarily disabled
+pub mod audio; // Re-enabled after fixing compilation issues
 pub mod input;
 pub mod rom;
 // pub mod gui; // Temporairement désactivé à cause des problèmes de lifetime
@@ -14,8 +14,8 @@ pub mod config;
 
 pub use cpu::*;
 pub use memory::*;
-pub use gpu::*;
-pub use audio::*;
+// pub use gpu::*; // Temporarily disabled
+pub use audio::*; // Re-enabled
 pub use input::*;
 pub use rom::*;
 // pub use gui::*; // Temporairement désactivé

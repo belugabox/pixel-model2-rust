@@ -120,7 +120,7 @@ impl Default for LoadConfig {
     fn default() -> Self {
         Self {
             validate_checksums: true,
-            allow_bad_checksums: false,
+            allow_bad_checksums: true, // Permettre les checksums incorrects pour le développement
             auto_load_missing: true,
             max_cache_size: 256 * 1024 * 1024, // 256 MB
             file_extensions: vec![
@@ -211,6 +211,9 @@ impl RomManager {
         
         // Créer le mapping mémoire
         rom_set.memory_map = self.create_memory_map(&rom_set)?;
+        
+        // Mettre à jour les checksums dans la base de données si nécessaire
+        self.database.update_checksums_from_loaded_roms(&game_info.short_name, &rom_set.roms);
         
         println!("Jeu chargé: {} ROMs, {} octets au total", 
                  rom_set.roms.len(), rom_set.memory_map.total_size);

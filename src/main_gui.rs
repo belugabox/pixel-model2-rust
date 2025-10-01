@@ -4,11 +4,11 @@ use std::env;
 
 mod cpu;
 mod memory;
-mod gpu;
-mod audio;
+// mod gpu; // Temporarily disabled
+// mod audio; // Temporarily disabled
 mod input;
 mod rom;
-mod gui;
+// mod gui; // Temporarily disabled
 mod config;
 
 use crate::gui::EmulatorApp;

@@ -9,22 +9,22 @@ use std::collections::VecDeque;
 pub struct ScspRegisters {
     /// Registre de contrôle principal (0x100400)
     pub control: u32,
-
+    
     /// Registre de statut (0x100404)
     pub status: u32,
-
+    
     /// Volume maître (0x100408)
     pub master_volume: u16,
-
+    
     /// Registre de contrôle des slots (0x10040C)
     pub slot_control: u32,
-
+    
     /// Registres des slots individuels (32 slots)
     pub slot_registers: [SlotRegisters; 32],
-
+    
     /// Mémoire DSP (4KB)
     pub dsp_memory: [u16; 2048],
-
+    
     /// Mémoire wave (2MB)
     pub wave_memory: Vec<u8>,
 }
@@ -33,25 +33,25 @@ pub struct ScspRegisters {
 pub struct SlotRegisters {
     /// Volume du slot
     pub volume: u16,
-
+    
     /// Fréquence du slot
     pub frequency: u16,
-
+    
     /// Adresse de début dans la mémoire wave
     pub start_address: u32,
-
+    
     /// Adresse de fin dans la mémoire wave
     pub end_address: u32,
-
+    
     /// Adresse de boucle
     pub loop_address: u32,
-
+    
     /// Contrôle du slot (attaque, decay, sustain, release)
     pub control: u16,
-
+    
     /// Panoramique (gauche/droite)
     pub pan: u16,
-
+    
     /// Type d'onde (PCM, noise, etc.)
     pub wave_type: u8,
 }
@@ -61,19 +61,19 @@ pub struct SlotRegisters {
 struct SlotState {
     /// Position actuelle dans l'onde
     position: f32,
-
+    
     /// Vitesse de lecture
     speed: f32,
-
+    
     /// Volume actuel (avec enveloppe)
     current_volume: f32,
-
+    
     /// Phase de l'enveloppe (attack, decay, sustain, release)
     envelope_phase: EnvelopePhase,
-
+    
     /// Compteur pour l'enveloppe
     envelope_counter: u32,
-
+    
     /// Actif ou non
     active: bool,
 }
@@ -94,6 +94,7 @@ impl Default for EnvelopePhase {
 }
 
 /// Émulateur du processeur sonore SCSP
+#[derive(Debug)]
 pub struct ScspAudio {
     sample_rate: u32,
     channels: u16,

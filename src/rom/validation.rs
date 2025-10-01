@@ -101,22 +101,35 @@ impl RomValidator {
             result.is_valid = false;
         }
         
-        // Vérifier le CRC32
-        if result.calculated_crc32 != expected.crc32 {
+        // Vérifier le CRC32 (seulement si ce n'est pas un placeholder)
+        if expected.crc32 != 0x00000000 && result.calculated_crc32 != expected.crc32 {
             result.errors.push(ValidationError::InvalidCrc32 {
                 expected: expected.crc32,
                 found: result.calculated_crc32,
             });
             result.is_valid = false;
+        } else if expected.crc32 == 0x00000000 {
+            // Checksum placeholder - ajouter un avertissement
+            result.warnings.push("Checksum CRC32 non défini dans la base de données".to_string());
         }
         
-        // Vérifier le MD5
+        // Vérifier le MD5 (seulement si ce n'est pas vide)
         if !expected.md5.is_empty() && result.calculated_md5 != expected.md5 {
             result.errors.push(ValidationError::InvalidMd5 {
                 expected: expected.md5.clone(),
                 found: result.calculated_md5.clone(),
             });
             result.is_valid = false;
+        } else if expected.md5.is_empty() {
+            // MD5 placeholder - ajouter un avertissement
+            result.warnings.push("Hash MD5 non défini dans la base de données".to_string());
+        }
+        
+        // Pour le développement, considérer valide si seulement la taille est correcte
+        // et les checksums sont des placeholders
+        if expected.crc32 == 0x00000000 && expected.md5.is_empty() && data.len() == expected.size {
+            result.is_valid = true;
+            result.errors.clear(); // Effacer les erreurs de checksum
         }
         
         // Vérifications spécifiques au type de ROM

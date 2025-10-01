@@ -21,6 +21,173 @@ pub use mapping::*;
 pub use ram::*;
 pub use rom::*;
 
+// Import du système audio SCSP
+// use crate::audio::ScspAudio;
+
+/// Buffer de commandes GPU pour traitement par lots
+#[derive(Debug)]
+pub struct GpuCommandBuffer {
+    /// Commandes en attente de traitement
+    commands: Vec<GpuCommand>,
+    
+    /// Capacité maximale du buffer
+    max_capacity: usize,
+    
+    /// Statistiques de performance
+    stats: CommandBufferStats,
+}
+
+#[derive(Debug, Clone)]
+pub struct CommandBufferStats {
+    pub total_commands_processed: u64,
+    pub batches_processed: u64,
+    pub average_batch_size: f32,
+    pub max_batch_size: usize,
+}
+
+impl GpuCommandBuffer {
+    /// Crée un nouveau buffer de commandes GPU
+    pub fn new() -> Self {
+        Self {
+            commands: Vec::new(),
+            max_capacity: 1024, // Capacité par défaut
+            stats: CommandBufferStats {
+                total_commands_processed: 0,
+                batches_processed: 0,
+                average_batch_size: 0.0,
+                max_batch_size: 0,
+            },
+        }
+    }
+    
+    /// Ajoute une commande au buffer
+    pub fn push(&mut self, command: GpuCommand) {
+        self.commands.push(command);
+        
+        // Si le buffer est plein, traiter automatiquement
+        if self.commands.len() >= self.max_capacity {
+            self.flush();
+        }
+    }
+    
+    /// Vide le buffer et retourne les commandes triées
+    pub fn flush(&mut self) -> Vec<GpuCommand> {
+        if self.commands.is_empty() {
+            return Vec::new();
+        }
+        
+        // Prendre possession des commandes
+        let commands = std::mem::take(&mut self.commands);
+        
+        // Trier les commandes pour optimisation
+        let sorted_commands = self.optimize_commands(commands);
+        
+        // Mettre à jour les statistiques
+        let batch_size = sorted_commands.len();
+        self.stats.total_commands_processed += batch_size as u64;
+        self.stats.batches_processed += 1;
+        self.stats.max_batch_size = self.stats.max_batch_size.max(batch_size);
+        self.stats.average_batch_size = self.stats.total_commands_processed as f32 / self.stats.batches_processed as f32;
+        
+        sorted_commands
+    }
+    
+    /// Optimise l'ordre des commandes pour de meilleures performances
+    fn optimize_commands(&self, mut commands: Vec<GpuCommand>) -> Vec<GpuCommand> {
+        // Stratégie d'optimisation avancée :
+        // 1. Éliminer les commandes redondantes (mêmes matrices, mêmes états)
+        // 2. Grouper les changements d'état
+        // 3. Grouper les chargements de textures
+        // 4. Grouper les appels de dessin
+        
+        let mut optimized = Vec::with_capacity(commands.len());
+        
+        // Extraire et dédupliquer les commandes par type
+        let mut state_commands = Vec::new();
+        let mut texture_commands = Vec::new();
+        let mut draw_commands = Vec::new();
+        let mut other_commands = Vec::new();
+        
+        // Maps pour éviter les doublons
+        let mut seen_matrices = std::collections::HashSet::new();
+        let mut seen_render_states = std::collections::HashSet::new();
+        let mut seen_textures = std::collections::HashSet::new();
+        
+        for command in commands {
+            match &command {
+                GpuCommand::SetModelMatrix(matrix) => {
+                    let key = (0, matrix[0] as u32, matrix[1] as u32, matrix[2] as u32, matrix[3] as u32);
+                    if seen_matrices.insert(key) {
+                        state_commands.push(command);
+                    }
+                },
+                GpuCommand::SetViewMatrix(matrix) => {
+                    let key = (1, matrix[0] as u32, matrix[1] as u32, matrix[2] as u32, matrix[3] as u32);
+                    if seen_matrices.insert(key) {
+                        state_commands.push(command);
+                    }
+                },
+                GpuCommand::SetProjectionMatrix(matrix) => {
+                    let key = (2, matrix[0] as u32, matrix[1] as u32, matrix[2] as u32, matrix[3] as u32);
+                    if seen_matrices.insert(key) {
+                        state_commands.push(command);
+                    }
+                },
+                GpuCommand::SetRenderState { state, enabled } => {
+                    let key = (*state as u32, *enabled as u32);
+                    if seen_render_states.insert(key) {
+                        state_commands.push(command);
+                    }
+                },
+                GpuCommand::LoadTexture { id, .. } => {
+                    if seen_textures.insert(*id) {
+                        texture_commands.push(command);
+                    }
+                },
+                GpuCommand::LoadTextureFromRom { id, .. } => {
+                    if seen_textures.insert(*id) {
+                        texture_commands.push(command);
+                    }
+                },
+                GpuCommand::DrawTriangle { .. } | 
+                GpuCommand::DrawQuad { .. } |
+                GpuCommand::DrawLine { .. } => {
+                    draw_commands.push(command);
+                },
+                _ => other_commands.push(command),
+            }
+        }
+        
+        // Réorganiser : état -> textures -> autres -> dessin
+        optimized.extend(state_commands);
+        optimized.extend(texture_commands);
+        optimized.extend(other_commands);
+        optimized.extend(draw_commands);
+        
+        optimized
+    }
+    
+    /// Retourne le nombre de commandes en attente
+    pub fn len(&self) -> usize {
+        self.commands.len()
+    }
+    
+    /// Vérifie si le buffer est vide
+    pub fn is_empty(&self) -> bool {
+        self.commands.is_empty()
+    }
+    
+    /// Obtient les statistiques du buffer
+    pub fn stats(&self) -> &CommandBufferStats {
+        &self.stats
+    }
+    
+    /// Vide complètement le buffer sans retourner les commandes
+    pub fn clear(&mut self) {
+        self.commands.clear();
+    }
+}
+
 /// Registres I/O du SEGA Model 2
 #[derive(Debug, Clone)]
 pub struct IoRegisters {
@@ -418,8 +585,14 @@ pub struct Model2Memory {
     /// Registres I/O
     io_registers: IoRegisters,
     
+    /// Système audio SCSP
+    // pub scsp_audio: ScspAudio,
+    
     /// File de commandes GPU en attente
     gpu_command_queue: Vec<GpuCommand>,
+    
+    /// Buffer de commandes GPU pour traitement par lots
+    pub gpu_command_buffer: GpuCommandBuffer,
 }
 
 impl Model2Memory {
@@ -434,7 +607,12 @@ impl Model2Memory {
             cache: RefCell::new(MemoryCache::new()),
             cache_enabled: true,
             io_registers: IoRegisters::new(),
+            // scsp_audio: ScspAudio::new().unwrap_or_else(|_| {
+            //     eprintln!("Warning: Failed to initialize SCSP audio, using default");
+            //     ScspAudio::default()
+            // }),
             gpu_command_queue: Vec::new(),
+            gpu_command_buffer: GpuCommandBuffer::new(),
         }
     }
     
@@ -455,23 +633,22 @@ impl Model2Memory {
     /// Met à jour les registres I/O (appelé périodiquement)
     pub fn update_io_registers(&mut self, cycles: u32, cpu: &mut crate::cpu::NecV60) {
         self.io_registers.update(cycles, cpu);
+        // self.scsp_audio.update(cycles);
     }
     
     /// Enfile une commande GPU
     pub fn enqueue_gpu_command(&mut self, command: GpuCommand) {
-        self.gpu_command_queue.push(command);
+        self.gpu_command_buffer.push(command);
     }
     
     /// Traite toutes les commandes GPU en attente
     pub fn process_gpu_commands(&mut self) -> Vec<GpuCommand> {
-        let commands = self.gpu_command_queue.clone();
-        self.gpu_command_queue.clear();
-        commands
+        self.gpu_command_buffer.flush()
     }
     
-    /// Obtient le nombre de commandes GPU en attente
-    pub fn gpu_command_count(&self) -> usize {
-        self.gpu_command_queue.len()
+    /// Force le vidage du buffer de commandes GPU (pour synchronisation frame)
+    pub fn flush_gpu_command_buffer(&mut self) -> Vec<GpuCommand> {
+        self.gpu_command_buffer.flush()
     }
 }
 
@@ -514,8 +691,13 @@ impl MemoryInterface for Model2Memory {
                     }
                 },
                 MemoryRegion::IoRegisters => {
-                    // Lecture des registres I/O
-                    Ok(self.io_registers.read_register(offset) as u8)
+                    // Vérifier si c'est un registre SCSP (0x400-0x5FF)
+                    // if offset >= 0x400 && offset < 0x600 {
+                    //     Ok(self.scsp_audio.read_register(offset - 0x400) as u8)
+                    // } else {
+                        // Lecture des registres I/O standard
+                        Ok(self.io_registers.read_register(offset) as u8)
+                    // }
                 },
             }
         } else {
@@ -570,8 +752,13 @@ impl MemoryInterface for Model2Memory {
                     }
                 },
                 MemoryRegion::IoRegisters => {
-                    // Lecture des registres I/O
-                    Ok(self.io_registers.read_register(offset) as u16)
+                    // Vérifier si c'est un registre SCSP (0x400-0x5FF)
+                    // if offset >= 0x400 && offset < 0x600 {
+                    //     Ok(self.scsp_audio.read_register(offset - 0x400) as u16)
+                    // } else {
+                        // Lecture des registres I/O standard
+                        Ok(self.io_registers.read_register(offset) as u16)
+                    // }
                 },
             }
         } else {
@@ -626,8 +813,13 @@ impl MemoryInterface for Model2Memory {
                     }
                 },
                 MemoryRegion::IoRegisters => {
-                    // Lecture des registres I/O
-                    Ok(self.io_registers.read_register(offset))
+                    // Vérifier si c'est un registre SCSP (0x400-0x5FF)
+                    // if offset >= 0x400 && offset < 0x600 {
+                    //     Ok(self.scsp_audio.read_register(offset - 0x400))
+                    // } else {
+                        // Lecture des registres I/O standard
+                        Ok(self.io_registers.read_register(offset))
+                    // }
                 },
             }
         } else {
@@ -656,9 +848,15 @@ impl MemoryInterface for Model2Memory {
                     Err(anyhow!("Tentative d'écriture en ROM à l'adresse {:08X}", address))
                 },
                 MemoryRegion::IoRegisters => {
-                    // Écriture dans les registres I/O
-                    self.io_registers.write_register(offset, value as u32);
-                    Ok(())
+                    // Vérifier si c'est un registre SCSP (0x400-0x5FF)
+                    // if offset >= 0x400 && offset < 0x600 {
+                    //     self.scsp_audio.write_register(offset - 0x400, value as u32);
+                    //     Ok(())
+                    // } else {
+                        // Écriture dans les registres I/O standard
+                        self.io_registers.write_register(offset, value as u32);
+                        Ok(())
+                    // }
                 },
             }
         } else {
@@ -684,9 +882,15 @@ impl MemoryInterface for Model2Memory {
                     Err(anyhow!("Tentative d'écriture en ROM à l'adresse {:08X}", address))
                 },
                 MemoryRegion::IoRegisters => {
-                    // Écriture dans les registres I/O
-                    self.io_registers.write_register(offset, value as u32);
-                    Ok(())
+                    // Vérifier si c'est un registre SCSP (0x400-0x5FF)
+                    // if offset >= 0x400 && offset < 0x600 {
+                    //     self.scsp_audio.write_register(offset - 0x400, value as u32);
+                    //     Ok(())
+                    // } else {
+                        // Écriture dans les registres I/O standard
+                        self.io_registers.write_register(offset, value as u32);
+                        Ok(())
+                    // }
                 },
             }
         } else {
@@ -712,11 +916,17 @@ impl MemoryInterface for Model2Memory {
                     Err(anyhow!("Tentative d'écriture en ROM à l'adresse {:08X}", address))
                 },
                 MemoryRegion::IoRegisters => {
-                    // Écriture dans les registres I/O
-                    if let Some(gpu_command) = self.io_registers.write_register(offset, value) {
-                        self.enqueue_gpu_command(gpu_command);
-                    }
-                    Ok(())
+                    // Vérifier si c'est un registre SCSP (0x400-0x5FF)
+                    // if offset >= 0x400 && offset < 0x600 {
+                    //     self.scsp_audio.write_register(offset - 0x400, value);
+                    //     Ok(())
+                    // } else {
+                        // Écriture dans les registres I/O standard
+                        if let Some(gpu_command) = self.io_registers.write_register(offset, value) {
+                            self.enqueue_gpu_command(gpu_command);
+                        }
+                        Ok(())
+                    // }
                 },
             }
         } else {

@@ -200,6 +200,44 @@ impl GameDatabase {
         self.games.insert(game.short_name.clone(), game);
     }
     
+    /// Met à jour les checksums d'une ROM dans la base de données
+    pub fn update_rom_checksums(&mut self, game_name: &str, rom_filename: &str, crc32: u32, md5: String) -> bool {
+        if let Some(game) = self.games.get_mut(game_name) {
+            // Chercher dans les ROMs requises
+            for rom in &mut game.required_roms {
+                if rom.filename == rom_filename {
+                    rom.crc32 = crc32;
+                    rom.md5 = md5;
+                    return true;
+                }
+            }
+            
+            // Chercher dans les ROMs optionnelles
+            for rom in &mut game.optional_roms {
+                if rom.filename == rom_filename {
+                    rom.crc32 = crc32;
+                    rom.md5 = md5;
+                    return true;
+                }
+            }
+        }
+        false
+    }
+    
+    /// Met à jour les checksums depuis un ensemble de ROMs chargées
+    pub fn update_checksums_from_loaded_roms(&mut self, game_name: &str, loaded_roms: &std::collections::HashMap<String, super::loader::LoadedRom>) {
+        for (filename, loaded_rom) in loaded_roms {
+            if loaded_rom.validation.is_valid {
+                self.update_rom_checksums(
+                    game_name,
+                    filename,
+                    loaded_rom.validation.calculated_crc32,
+                    loaded_rom.validation.calculated_md5.clone(),
+                );
+            }
+        }
+    }
+    
     /// Charge la base de données depuis un fichier JSON
     pub fn load_from_file(&mut self, path: &str) -> anyhow::Result<()> {
         let content = std::fs::read_to_string(path)?;
@@ -234,9 +272,9 @@ impl GameDatabase {
                 RomInfo {
                     filename: "epr-17574.30".to_string(),
                     rom_type: RomType::Program,
-                    size: 524288,
-                    crc32: 0x1234ABCD,
-                    md5: "d41d8cd98f00b204e9800998ecf8427e".to_string(),
+                    size: 524288, // 512KB
+                    crc32: 0x00000000, // Placeholder - will be updated when real ROM is loaded
+                    md5: "".to_string(), // Placeholder - will be updated when real ROM is loaded
                     load_address: 0x00000000,
                     bank: 0,
                     required: true,
@@ -244,9 +282,9 @@ impl GameDatabase {
                 RomInfo {
                     filename: "epr-18022.ic2".to_string(),
                     rom_type: RomType::Program,
-                    size: 65536,
-                    crc32: 0x5678EFAB,
-                    md5: "e99a18c428cb38d5f260853678922e03".to_string(),
+                    size: 65536, // 64KB
+                    crc32: 0x00000000, // Placeholder
+                    md5: "".to_string(), // Placeholder
                     load_address: 0x00080000,
                     bank: 0,
                     required: true,
@@ -285,9 +323,9 @@ impl GameDatabase {
                 RomInfo {
                     filename: "epr-16724a.6".to_string(),
                     rom_type: RomType::Program,
-                    size: 524288,
-                    crc32: 0xABCD1234,
-                    md5: "c4ca4238a0b923820dcc509a6f75849b".to_string(),
+                    size: 524288, // 512KB
+                    crc32: 0x00000000, // Placeholder
+                    md5: "".to_string(), // Placeholder
                     load_address: 0x00000000,
                     bank: 0,
                     required: true,
@@ -326,9 +364,9 @@ impl GameDatabase {
                 RomInfo {
                     filename: "epr-17168a.6".to_string(),
                     rom_type: RomType::Program,
-                    size: 524288,
-                    crc32: 0xDEADBEEF,
-                    md5: "37b51d194a7513e45b56f6524f2d51f2".to_string(),
+                    size: 524288, // 512KB
+                    crc32: 0x00000000, // Placeholder
+                    md5: "".to_string(), // Placeholder
                     load_address: 0x00000000,
                     bank: 0,
                     required: true,
