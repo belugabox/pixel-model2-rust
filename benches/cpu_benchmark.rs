@@ -1,5 +1,8 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use pixel_model2_rust::{cpu::NecV60, memory::{MemoryInterface, Model2Memory}};
+use pixel_model2_rust::{
+    cpu::NecV60,
+    memory::{MemoryInterface, Model2Memory},
+};
 
 fn benchmark_cpu_execution(c: &mut Criterion) {
     let mut cpu = NecV60::new();
