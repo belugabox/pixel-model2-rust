@@ -20,6 +20,7 @@ use anyhow::Result;
 pub use decoder::*;
 pub use executor::*;
 pub use instruction_formats::*;
+pub use instructions::*;
 pub use registers::*;
 
 /// Types d'interruptions du SEGA Model 2
