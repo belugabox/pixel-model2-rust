@@ -29,7 +29,7 @@ fn benchmark_memory_mapping(c: &mut Criterion) {
     let memory = Model2Memory::new();
 
     c.bench_function("address_resolution", |b| {
-        b.iter(|| memory.memory_map.resolve(black_box(0x00001000)))
+        b.iter(|| memory.mapping.resolve(black_box(0x00001000)))
     });
 }
 

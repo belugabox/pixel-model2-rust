@@ -17,6 +17,7 @@ pub mod string_operations;
 
 use anyhow::Result;
 
+pub use decoder::*;
 pub use executor::*;
 pub use instruction_formats::*;
 pub use registers::*;
