@@ -95,7 +95,12 @@ impl V60InstructionDecoder {
 
         // Debug: afficher le premier mot pour diagnostiquer les tests de décodage
         let dbg_first = u16::from_le_bytes([data[0], data[1]]);
-        eprintln!("[decoder] addr=0x{:08X} len={} first_word=0x{:04X}", address, data.len(), dbg_first);
+        eprintln!(
+            "[decoder] addr=0x{:08X} len={} first_word=0x{:04X}",
+            address,
+            data.len(),
+            dbg_first
+        );
 
         // Lire les premiers 16 bits pour déterminer le format
         let first_word = u16::from_le_bytes([data[0], data[1]]);

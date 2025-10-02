@@ -23,7 +23,10 @@ fn test_instruction_decoder_format1() {
             assert_eq!(dest, Operand::Register(2));
             assert_eq!(src, Operand::Register(1));
         }
-        _ => panic!("Instruction décodée incorrectement: {:?}", result.instruction),
+        _ => panic!(
+            "Instruction décodée incorrectement: {:?}",
+            result.instruction
+        ),
     }
 }
 
@@ -48,7 +51,10 @@ fn test_instruction_decoder_format2() {
             assert_eq!(src1, Operand::Register(2));
             assert_eq!(src2, Operand::Immediate(100));
         }
-        _ => panic!("Instruction décodée incorrectement: {:?}", result.instruction),
+        _ => panic!(
+            "Instruction décodée incorrectement: {:?}",
+            result.instruction
+        ),
     }
 }
 
@@ -71,7 +77,10 @@ fn test_instruction_decoder_format4_branch() {
             // On vérifie seulement le type ici (le décodage précis du déplacement dépend de la
             // représentation interne et est testé ailleurs)
         }
-        _ => panic!("Instruction décodée incorrectement: {:?}", result.instruction),
+        _ => panic!(
+            "Instruction décodée incorrectement: {:?}",
+            result.instruction
+        ),
     }
 }
 
@@ -88,7 +97,10 @@ fn test_instruction_decoder_format5_system() {
 
     match result.instruction {
         Instruction::Nop => {}
-        _ => panic!("Instruction décodée incorretement: {:?}", result.instruction),
+        _ => panic!(
+            "Instruction décodée incorretement: {:?}",
+            result.instruction
+        ),
     }
 }
 
