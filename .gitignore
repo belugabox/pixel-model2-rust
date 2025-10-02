@@ -33,3 +33,18 @@ Thumbs.db
 # Sauvegardes
 *.bak
 *.save
+# Log files
+*.txt
+Integration Tests/
+Test (*
+
+# CI log files
+*.txt
+Test (*)
+Integration Tests/
+*.zip
+
+# CI log files
+*.txt
+Integration Tests/
+Test */
