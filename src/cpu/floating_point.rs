@@ -155,7 +155,7 @@ mod tests {
 
     #[test]
     fn test_float_add() {
-        let a = 3.14f32.to_bits();
+        let a = std::f32::consts::PI.to_bits();
         let b = 2.86f32.to_bits();
         let result = FloatingPointUnit::add(a, b);
 
