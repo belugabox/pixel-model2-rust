@@ -1,0 +1,87 @@
+﻿2025-10-02T12:50:53.3111680Z ##[group]Run actions/checkout@v4
+2025-10-02T12:50:53.3112599Z with:
+2025-10-02T12:50:53.3113268Z   repository: belugabox/pixel-model2-rust
+2025-10-02T12:50:53.3114050Z   token: ***
+2025-10-02T12:50:53.3114466Z   ssh-strict: true
+2025-10-02T12:50:53.3114883Z   ssh-user: git
+2025-10-02T12:50:53.3115315Z   persist-credentials: true
+2025-10-02T12:50:53.3115801Z   clean: true
+2025-10-02T12:50:53.3116238Z   sparse-checkout-cone-mode: true
+2025-10-02T12:50:53.3116756Z   fetch-depth: 1
+2025-10-02T12:50:53.3117200Z   fetch-tags: false
+2025-10-02T12:50:53.3117648Z   show-progress: true
+2025-10-02T12:50:53.3118098Z   lfs: false
+2025-10-02T12:50:53.3118512Z   submodules: false
+2025-10-02T12:50:53.3118951Z   set-safe-directory: true
+2025-10-02T12:50:53.3119667Z env:
+2025-10-02T12:50:53.3120082Z   CARGO_TERM_COLOR: always
+2025-10-02T12:50:53.3120556Z ##[endgroup]
+2025-10-02T12:50:53.4202915Z Syncing repository: belugabox/pixel-model2-rust
+2025-10-02T12:50:53.4205399Z ##[group]Getting Git version info
+2025-10-02T12:50:53.4206394Z Working directory is '/home/runner/work/pixel-model2-rust/pixel-model2-rust'
+2025-10-02T12:50:53.4207533Z [command]/usr/bin/git version
+2025-10-02T12:50:53.4238858Z git version 2.51.0
+2025-10-02T12:50:53.4264358Z ##[endgroup]
+2025-10-02T12:50:53.4278523Z Temporarily overriding HOME='/home/runner/work/_temp/5d0fdb70-3778-4505-af8e-5bd9749c46ef' before making global git config changes
+2025-10-02T12:50:53.4280816Z Adding repository directory to the temporary git global config as a safe directory
+2025-10-02T12:50:53.4283563Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/pixel-model2-rust/pixel-model2-rust
+2025-10-02T12:50:53.4335315Z Deleting the contents of '/home/runner/work/pixel-model2-rust/pixel-model2-rust'
+2025-10-02T12:50:53.4338528Z ##[group]Initializing the repository
+2025-10-02T12:50:53.4342297Z [command]/usr/bin/git init /home/runner/work/pixel-model2-rust/pixel-model2-rust
+2025-10-02T12:50:53.4405313Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-10-02T12:50:53.4407168Z hint: is subject to change. To configure the initial branch name to use in all
+2025-10-02T12:50:53.4408689Z hint: of your new repositories, which will suppress this warning, call:
+2025-10-02T12:50:53.4409426Z hint:
+2025-10-02T12:50:53.4409926Z hint: 	git config --global init.defaultBranch <name>
+2025-10-02T12:50:53.4410534Z hint:
+2025-10-02T12:50:53.4411100Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-10-02T12:50:53.4412098Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-10-02T12:50:53.4413641Z hint:
+2025-10-02T12:50:53.4414093Z hint: 	git branch -m <name>
+2025-10-02T12:50:53.4414569Z hint:
+2025-10-02T12:50:53.4415192Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2025-10-02T12:50:53.4416309Z Initialized empty Git repository in /home/runner/work/pixel-model2-rust/pixel-model2-rust/.git/
+2025-10-02T12:50:53.4418767Z [command]/usr/bin/git remote add origin https://github.com/belugabox/pixel-model2-rust
+2025-10-02T12:50:53.4451415Z ##[endgroup]
+2025-10-02T12:50:53.4452648Z ##[group]Disabling automatic garbage collection
+2025-10-02T12:50:53.4455095Z [command]/usr/bin/git config --local gc.auto 0
+2025-10-02T12:50:53.4482718Z ##[endgroup]
+2025-10-02T12:50:53.4483727Z ##[group]Setting up auth
+2025-10-02T12:50:53.4489290Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-10-02T12:50:53.4520045Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-10-02T12:50:53.4780768Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-10-02T12:50:53.4814439Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-10-02T12:50:53.5035105Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-10-02T12:50:53.5071039Z ##[endgroup]
+2025-10-02T12:50:53.5071874Z ##[group]Fetching the repository
+2025-10-02T12:50:53.5080229Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +08872952fc208661dc31f64c5ce5408715406f86:refs/remotes/pull/1/merge
+2025-10-02T12:50:53.7269463Z From https://github.com/belugabox/pixel-model2-rust
+2025-10-02T12:50:53.7271466Z  * [new ref]         08872952fc208661dc31f64c5ce5408715406f86 -> pull/1/merge
+2025-10-02T12:50:53.7301318Z ##[endgroup]
+2025-10-02T12:50:53.7302579Z ##[group]Determining the checkout info
+2025-10-02T12:50:53.7304219Z ##[endgroup]
+2025-10-02T12:50:53.7308040Z [command]/usr/bin/git sparse-checkout disable
+2025-10-02T12:50:53.7353189Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2025-10-02T12:50:53.7380441Z ##[group]Checking out the ref
+2025-10-02T12:50:53.7383636Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/1/merge
+2025-10-02T12:50:53.7483457Z Note: switching to 'refs/remotes/pull/1/merge'.
+2025-10-02T12:50:53.7484716Z 
+2025-10-02T12:50:53.7485706Z You are in 'detached HEAD' state. You can look around, make experimental
+2025-10-02T12:50:53.7488101Z changes and commit them, and you can discard any commits you make in this
+2025-10-02T12:50:53.7489777Z state without impacting any branches by switching back to a branch.
+2025-10-02T12:50:53.7491451Z 
+2025-10-02T12:50:53.7492122Z If you want to create a new branch to retain commits you create, you may
+2025-10-02T12:50:53.7493864Z do so (now or later) by using -c with the switch command. Example:
+2025-10-02T12:50:53.7494876Z 
+2025-10-02T12:50:53.7495266Z   git switch -c <new-branch-name>
+2025-10-02T12:50:53.7495899Z 
+2025-10-02T12:50:53.7496251Z Or undo this operation with:
+2025-10-02T12:50:53.7496835Z 
+2025-10-02T12:50:53.7497136Z   git switch -
+2025-10-02T12:50:53.7497601Z 
+2025-10-02T12:50:53.7498342Z Turn off this advice by setting config variable advice.detachedHead to false
+2025-10-02T12:50:53.7499454Z 
+2025-10-02T12:50:53.7500708Z HEAD is now at 0887295 Merge 38225a1a218f8c2dd2156c3d164a192f1398ca52 into 6265fd16b087c0701f70e3b4ceba98de7cea09dd
+2025-10-02T12:50:53.7505017Z ##[endgroup]
+2025-10-02T12:50:53.7527000Z [command]/usr/bin/git log -1 --format=%H
+2025-10-02T12:50:53.7548106Z 08872952fc208661dc31f64c5ce5408715406f86

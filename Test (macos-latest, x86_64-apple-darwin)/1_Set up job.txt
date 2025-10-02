@@ -1,0 +1,43 @@
+﻿2025-10-02T12:50:52.5169020Z Current runner version: '2.328.0'
+2025-10-02T12:50:52.5200700Z ##[group]Runner Image Provisioner
+2025-10-02T12:50:52.5201190Z Hosted Compute Agent
+2025-10-02T12:50:52.5201520Z Version: 20250912.392
+2025-10-02T12:50:52.5201890Z Commit: d921fda672a98b64f4f82364647e2f10b2267d0b
+2025-10-02T12:50:52.5202310Z Build Date: 2025-09-12T15:23:14Z
+2025-10-02T12:50:52.5202690Z ##[endgroup]
+2025-10-02T12:50:52.5203010Z ##[group]Operating System
+2025-10-02T12:50:52.5203350Z macOS
+2025-10-02T12:50:52.5203650Z 15.6.1
+2025-10-02T12:50:52.5203980Z 24G90
+2025-10-02T12:50:52.5204280Z ##[endgroup]
+2025-10-02T12:50:52.5204590Z ##[group]Runner Image
+2025-10-02T12:50:52.5204940Z Image: macos-15-arm64
+2025-10-02T12:50:52.5205300Z Version: 20250922.2357
+2025-10-02T12:50:52.5205960Z Included Software: https://github.com/actions/runner-images/blob/macos-15-arm64/20250922.2357/images/macos/macos-15-arm64-Readme.md
+2025-10-02T12:50:52.5206880Z Image Release: https://github.com/actions/runner-images/releases/tag/macos-15-arm64%2F20250922.2357
+2025-10-02T12:50:52.5207650Z ##[endgroup]
+2025-10-02T12:50:52.5209250Z ##[group]GITHUB_TOKEN Permissions
+2025-10-02T12:50:52.5210270Z Actions: write
+2025-10-02T12:50:52.5210620Z Attestations: write
+2025-10-02T12:50:52.5210930Z Checks: write
+2025-10-02T12:50:52.5211240Z Contents: write
+2025-10-02T12:50:52.5211570Z Deployments: write
+2025-10-02T12:50:52.5211930Z Discussions: write
+2025-10-02T12:50:52.5212240Z Issues: write
+2025-10-02T12:50:52.5212540Z Metadata: read
+2025-10-02T12:50:52.5212840Z Models: read
+2025-10-02T12:50:52.5213130Z Packages: write
+2025-10-02T12:50:52.5213450Z Pages: write
+2025-10-02T12:50:52.5213770Z PullRequests: write
+2025-10-02T12:50:52.5214100Z RepositoryProjects: write
+2025-10-02T12:50:52.5214450Z SecurityEvents: write
+2025-10-02T12:50:52.5214810Z Statuses: write
+2025-10-02T12:50:52.5215120Z ##[endgroup]
+2025-10-02T12:50:52.5216400Z Secret source: Actions
+2025-10-02T12:50:52.5216790Z Prepare workflow directory
+2025-10-02T12:50:52.5469650Z Prepare all required actions
+2025-10-02T12:50:52.5496480Z Getting action download info
+2025-10-02T12:50:52.9130780Z Download action repository 'actions/checkout@v4' (SHA:08eba0b27e820071cde6df949e0beb9ba4906955)
+2025-10-02T12:50:53.2285280Z Download action repository 'dtolnay/rust-toolchain@stable' (SHA:5d458579430fc14a04a08a1e7d3694f545e91ce6)
+2025-10-02T12:50:54.0389260Z Download action repository 'Swatinem/rust-cache@v2' (SHA:98c8021b550208e191a6a3145459bfc9fb29c4c0)
+2025-10-02T12:50:55.2460390Z Complete job name: Test (macos-latest, x86_64-apple-darwin)

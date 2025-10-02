@@ -1,0 +1,45 @@
+﻿2025-10-02T12:51:09.7449468Z ##[group]Run Swatinem/rust-cache@v2
+2025-10-02T12:51:09.7449781Z with:
+2025-10-02T12:51:09.7449938Z   prefix-key: v0-rust
+2025-10-02T12:51:09.7450129Z   cache-targets: true
+2025-10-02T12:51:09.7450297Z   cache-all-crates: false
+2025-10-02T12:51:09.7450493Z   cache-workspace-crates: false
+2025-10-02T12:51:09.7450679Z   save-if: true
+2025-10-02T12:51:09.7450837Z   cache-provider: github
+2025-10-02T12:51:09.7451008Z   cache-bin: true
+2025-10-02T12:51:09.7451161Z   lookup-only: false
+2025-10-02T12:51:09.7451313Z env:
+2025-10-02T12:51:09.7451453Z   CARGO_TERM_COLOR: always
+2025-10-02T12:51:09.7451660Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2025-10-02T12:51:09.7451886Z   CARGO_INCREMENTAL: 0
+2025-10-02T12:51:09.7452071Z ##[endgroup]
+2025-10-02T12:51:10.9674080Z ##[group]Cache Configuration
+2025-10-02T12:51:10.9674635Z Cache Provider:
+2025-10-02T12:51:10.9675162Z     github
+2025-10-02T12:51:10.9675450Z Workspaces:
+2025-10-02T12:51:10.9676914Z     D:\a\pixel-model2-rust\pixel-model2-rust
+2025-10-02T12:51:10.9678155Z Cache Paths:
+2025-10-02T12:51:10.9678829Z     C:\Users\runneradmin\.cargo\bin
+2025-10-02T12:51:10.9679638Z     C:\Users\runneradmin\.cargo\.crates.toml
+2025-10-02T12:51:10.9680101Z     C:\Users\runneradmin\.cargo\.crates2.json
+2025-10-02T12:51:10.9680541Z     C:\Users\runneradmin\.cargo\registry
+2025-10-02T12:51:10.9680955Z     C:\Users\runneradmin\.cargo\git
+2025-10-02T12:51:10.9681399Z     D:\a\pixel-model2-rust\pixel-model2-rust\target
+2025-10-02T12:51:10.9681831Z Restore Key:
+2025-10-02T12:51:10.9682125Z     v0-rust-test-Windows_NT-x64-424926a2
+2025-10-02T12:51:10.9682501Z Cache Key:
+2025-10-02T12:51:10.9682799Z     v0-rust-test-Windows_NT-x64-424926a2-877f72a6
+2025-10-02T12:51:10.9683202Z .. Prefix:
+2025-10-02T12:51:10.9683492Z   - v0-rust-test-Windows_NT-x64
+2025-10-02T12:51:10.9683848Z .. Environment considered:
+2025-10-02T12:51:10.9684400Z   - Rust Version: 1.90.0 x86_64-pc-windows-msvc (1159e78c4747b02ef996e55082b704c09b970588)
+2025-10-02T12:51:10.9685006Z   - CARGO_HOME
+2025-10-02T12:51:10.9685279Z   - CARGO_INCREMENTAL
+2025-10-02T12:51:10.9685603Z   - CARGO_TERM_COLOR
+2025-10-02T12:51:10.9686385Z .. Lockfiles considered:
+2025-10-02T12:51:10.9687244Z   - D:\a\pixel-model2-rust\pixel-model2-rust\Cargo.toml
+2025-10-02T12:51:10.9688019Z ##[endgroup]
+2025-10-02T12:51:10.9688185Z 
+2025-10-02T12:51:10.9688298Z ... Restoring cache ...
+2025-10-02T12:51:11.1866167Z ##[warning]Cache not found for keys: v0-rust-test-Windows_NT-x64-424926a2-877f72a6, v0-rust-test-Windows_NT-x64-424926a2
+2025-10-02T12:51:11.1875571Z No cache found.

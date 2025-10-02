@@ -1,0 +1,43 @@
+﻿2025-10-02T12:50:52.2273352Z Current runner version: '2.328.0'
+2025-10-02T12:50:52.2359571Z ##[group]Runner Image Provisioner
+2025-10-02T12:50:52.2360796Z Hosted Compute Agent
+2025-10-02T12:50:52.2361654Z Version: 20250912.392
+2025-10-02T12:50:52.2362517Z Commit: d921fda672a98b64f4f82364647e2f10b2267d0b
+2025-10-02T12:50:52.2363532Z Build Date: 2025-09-12T15:23:14Z
+2025-10-02T12:50:52.2364543Z ##[endgroup]
+2025-10-02T12:50:52.2365224Z ##[group]Operating System
+2025-10-02T12:50:52.2366064Z Microsoft Windows Server 2025
+2025-10-02T12:50:52.2366901Z 10.0.26100
+2025-10-02T12:50:52.2367687Z Datacenter
+2025-10-02T12:50:52.2368377Z ##[endgroup]
+2025-10-02T12:50:52.2369134Z ##[group]Runner Image
+2025-10-02T12:50:52.2369948Z Image: windows-2025
+2025-10-02T12:50:52.2371151Z Version: 20250921.36.1
+2025-10-02T12:50:52.2372985Z Included Software: https://github.com/actions/runner-images/blob/win25/20250921.36/images/windows/Windows2025-Readme.md
+2025-10-02T12:50:52.2375443Z Image Release: https://github.com/actions/runner-images/releases/tag/win25%2F20250921.36
+2025-10-02T12:50:52.2378060Z ##[endgroup]
+2025-10-02T12:50:52.2382437Z ##[group]GITHUB_TOKEN Permissions
+2025-10-02T12:50:52.2385291Z Actions: write
+2025-10-02T12:50:52.2386114Z Attestations: write
+2025-10-02T12:50:52.2386738Z Checks: write
+2025-10-02T12:50:52.2387382Z Contents: write
+2025-10-02T12:50:52.2388215Z Deployments: write
+2025-10-02T12:50:52.2388892Z Discussions: write
+2025-10-02T12:50:52.2389578Z Issues: write
+2025-10-02T12:50:52.2390301Z Metadata: read
+2025-10-02T12:50:52.2391342Z Models: read
+2025-10-02T12:50:52.2391991Z Packages: write
+2025-10-02T12:50:52.2392785Z Pages: write
+2025-10-02T12:50:52.2393472Z PullRequests: write
+2025-10-02T12:50:52.2394439Z RepositoryProjects: write
+2025-10-02T12:50:52.2395365Z SecurityEvents: write
+2025-10-02T12:50:52.2396373Z Statuses: write
+2025-10-02T12:50:52.2397090Z ##[endgroup]
+2025-10-02T12:50:52.2400032Z Secret source: Actions
+2025-10-02T12:50:52.2401090Z Prepare workflow directory
+2025-10-02T12:50:52.2823134Z Prepare all required actions
+2025-10-02T12:50:52.2860448Z Getting action download info
+2025-10-02T12:50:52.5313050Z Download action repository 'actions/checkout@v4' (SHA:08eba0b27e820071cde6df949e0beb9ba4906955)
+2025-10-02T12:50:52.6552030Z Download action repository 'dtolnay/rust-toolchain@stable' (SHA:5d458579430fc14a04a08a1e7d3694f545e91ce6)
+2025-10-02T12:50:52.8359720Z Download action repository 'Swatinem/rust-cache@v2' (SHA:98c8021b550208e191a6a3145459bfc9fb29c4c0)
+2025-10-02T12:50:53.2870541Z Complete job name: Test (windows-latest, x86_64-pc-windows-msvc)

@@ -1,0 +1,43 @@
+﻿2025-10-02T12:50:53.0894286Z Current runner version: '2.328.0'
+2025-10-02T12:50:53.0941738Z ##[group]Runner Image Provisioner
+2025-10-02T12:50:53.0942591Z Hosted Compute Agent
+2025-10-02T12:50:53.0943118Z Version: 20250912.392
+2025-10-02T12:50:53.0943779Z Commit: d921fda672a98b64f4f82364647e2f10b2267d0b
+2025-10-02T12:50:53.0944720Z Build Date: 2025-09-12T15:23:14Z
+2025-10-02T12:50:53.0945333Z ##[endgroup]
+2025-10-02T12:50:53.0945954Z ##[group]Operating System
+2025-10-02T12:50:53.0946509Z Ubuntu
+2025-10-02T12:50:53.0947001Z 24.04.3
+2025-10-02T12:50:53.0947415Z LTS
+2025-10-02T12:50:53.0948066Z ##[endgroup]
+2025-10-02T12:50:53.0948531Z ##[group]Runner Image
+2025-10-02T12:50:53.0949096Z Image: ubuntu-24.04
+2025-10-02T12:50:53.0949636Z Version: 20250922.53.1
+2025-10-02T12:50:53.0950670Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250922.53/images/ubuntu/Ubuntu2404-Readme.md
+2025-10-02T12:50:53.0952040Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250922.53
+2025-10-02T12:50:53.0953329Z ##[endgroup]
+2025-10-02T12:50:53.0956236Z ##[group]GITHUB_TOKEN Permissions
+2025-10-02T12:50:53.0958183Z Actions: write
+2025-10-02T12:50:53.0958733Z Attestations: write
+2025-10-02T12:50:53.0959350Z Checks: write
+2025-10-02T12:50:53.0959819Z Contents: write
+2025-10-02T12:50:53.0960357Z Deployments: write
+2025-10-02T12:50:53.0960916Z Discussions: write
+2025-10-02T12:50:53.0961395Z Issues: write
+2025-10-02T12:50:53.0961876Z Metadata: read
+2025-10-02T12:50:53.0962359Z Models: read
+2025-10-02T12:50:53.0962874Z Packages: write
+2025-10-02T12:50:53.0963383Z Pages: write
+2025-10-02T12:50:53.0963909Z PullRequests: write
+2025-10-02T12:50:53.0964643Z RepositoryProjects: write
+2025-10-02T12:50:53.0965227Z SecurityEvents: write
+2025-10-02T12:50:53.0965889Z Statuses: write
+2025-10-02T12:50:53.0966394Z ##[endgroup]
+2025-10-02T12:50:53.0968402Z Secret source: Actions
+2025-10-02T12:50:53.0969080Z Prepare workflow directory
+2025-10-02T12:50:53.1355426Z Prepare all required actions
+2025-10-02T12:50:53.1392364Z Getting action download info
+2025-10-02T12:50:53.5654579Z Download action repository 'actions/checkout@v4' (SHA:08eba0b27e820071cde6df949e0beb9ba4906955)
+2025-10-02T12:50:53.7597662Z Download action repository 'dtolnay/rust-toolchain@stable' (SHA:5d458579430fc14a04a08a1e7d3694f545e91ce6)
+2025-10-02T12:50:54.1716143Z Download action repository 'Swatinem/rust-cache@v2' (SHA:98c8021b550208e191a6a3145459bfc9fb29c4c0)
+2025-10-02T12:50:54.9695332Z Complete job name: Integration Tests

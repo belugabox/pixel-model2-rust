@@ -1,0 +1,43 @@
+﻿2025-10-02T12:50:52.2518928Z Current runner version: '2.328.0'
+2025-10-02T12:50:52.2583999Z ##[group]Runner Image Provisioner
+2025-10-02T12:50:52.2585107Z Hosted Compute Agent
+2025-10-02T12:50:52.2586042Z Version: 20250912.392
+2025-10-02T12:50:52.2586967Z Commit: d921fda672a98b64f4f82364647e2f10b2267d0b
+2025-10-02T12:50:52.2588074Z Build Date: 2025-09-12T15:23:14Z
+2025-10-02T12:50:52.2589068Z ##[endgroup]
+2025-10-02T12:50:52.2589913Z ##[group]Operating System
+2025-10-02T12:50:52.2590795Z Ubuntu
+2025-10-02T12:50:52.2591591Z 24.04.3
+2025-10-02T12:50:52.2592315Z LTS
+2025-10-02T12:50:52.2592987Z ##[endgroup]
+2025-10-02T12:50:52.2594172Z ##[group]Runner Image
+2025-10-02T12:50:52.2594996Z Image: ubuntu-24.04
+2025-10-02T12:50:52.2595828Z Version: 20250922.53.1
+2025-10-02T12:50:52.2597630Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250922.53/images/ubuntu/Ubuntu2404-Readme.md
+2025-10-02T12:50:52.2599981Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250922.53
+2025-10-02T12:50:52.2601906Z ##[endgroup]
+2025-10-02T12:50:52.2606260Z ##[group]GITHUB_TOKEN Permissions
+2025-10-02T12:50:52.2608938Z Actions: write
+2025-10-02T12:50:52.2609805Z Attestations: write
+2025-10-02T12:50:52.2610577Z Checks: write
+2025-10-02T12:50:52.2611461Z Contents: write
+2025-10-02T12:50:52.2612234Z Deployments: write
+2025-10-02T12:50:52.2613261Z Discussions: write
+2025-10-02T12:50:52.2614216Z Issues: write
+2025-10-02T12:50:52.2614931Z Metadata: read
+2025-10-02T12:50:52.2615654Z Models: read
+2025-10-02T12:50:52.2616489Z Packages: write
+2025-10-02T12:50:52.2617401Z Pages: write
+2025-10-02T12:50:52.2618122Z PullRequests: write
+2025-10-02T12:50:52.2619047Z RepositoryProjects: write
+2025-10-02T12:50:52.2619926Z SecurityEvents: write
+2025-10-02T12:50:52.2620906Z Statuses: write
+2025-10-02T12:50:52.2621805Z ##[endgroup]
+2025-10-02T12:50:52.2624966Z Secret source: Actions
+2025-10-02T12:50:52.2626094Z Prepare workflow directory
+2025-10-02T12:50:52.3166350Z Prepare all required actions
+2025-10-02T12:50:52.3220594Z Getting action download info
+2025-10-02T12:50:52.6361161Z Download action repository 'actions/checkout@v4' (SHA:08eba0b27e820071cde6df949e0beb9ba4906955)
+2025-10-02T12:50:52.7123661Z Download action repository 'dtolnay/rust-toolchain@stable' (SHA:5d458579430fc14a04a08a1e7d3694f545e91ce6)
+2025-10-02T12:50:52.8704243Z Download action repository 'Swatinem/rust-cache@v2' (SHA:98c8021b550208e191a6a3145459bfc9fb29c4c0)
+2025-10-02T12:50:53.2340014Z Complete job name: Test (ubuntu-latest, x86_64-unknown-linux-gnu)

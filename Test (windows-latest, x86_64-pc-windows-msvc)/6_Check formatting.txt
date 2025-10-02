@@ -1,0 +1,9 @@
+﻿2025-10-02T12:51:11.2105555Z ##[group]Run cargo fmt --all -- --check
+2025-10-02T12:51:11.2105930Z [36;1mcargo fmt --all -- --check[0m
+2025-10-02T12:51:11.2221324Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2025-10-02T12:51:11.2221660Z env:
+2025-10-02T12:51:11.2221817Z   CARGO_TERM_COLOR: always
+2025-10-02T12:51:11.2222028Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2025-10-02T12:51:11.2222262Z   CARGO_INCREMENTAL: 0
+2025-10-02T12:51:11.2222437Z   CACHE_ON_FAILURE: false
+2025-10-02T12:51:11.2222618Z ##[endgroup]

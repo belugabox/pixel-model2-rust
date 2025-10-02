@@ -1,0 +1,54 @@
+﻿2025-10-02T12:51:26.5182822Z ##[group]Run Swatinem/rust-cache@v2
+2025-10-02T12:51:26.5183111Z with:
+2025-10-02T12:51:26.5183285Z   prefix-key: v0-rust
+2025-10-02T12:51:26.5183499Z   cache-targets: true
+2025-10-02T12:51:26.5183700Z   cache-all-crates: false
+2025-10-02T12:51:26.5183930Z   cache-workspace-crates: false
+2025-10-02T12:51:26.5184379Z   save-if: true
+2025-10-02T12:51:26.5184572Z   cache-provider: github
+2025-10-02T12:51:26.5184774Z   cache-bin: true
+2025-10-02T12:51:26.5184959Z   lookup-only: false
+2025-10-02T12:51:26.5185150Z env:
+2025-10-02T12:51:26.5185314Z   CARGO_TERM_COLOR: always
+2025-10-02T12:51:26.5185540Z   CARGO_HOME: /home/runner/.cargo
+2025-10-02T12:51:26.5185768Z   CARGO_INCREMENTAL: 0
+2025-10-02T12:51:26.5185966Z ##[endgroup]
+2025-10-02T12:51:26.9310921Z ##[group]Cache Configuration
+2025-10-02T12:51:26.9311244Z Cache Provider:
+2025-10-02T12:51:26.9311467Z     github
+2025-10-02T12:51:26.9311646Z Workspaces:
+2025-10-02T12:51:26.9312558Z     /home/runner/work/pixel-model2-rust/pixel-model2-rust
+2025-10-02T12:51:26.9313131Z Cache Paths:
+2025-10-02T12:51:26.9313465Z     /home/runner/.cargo/bin
+2025-10-02T12:51:26.9313848Z     /home/runner/.cargo/.crates.toml
+2025-10-02T12:51:26.9314379Z     /home/runner/.cargo/.crates2.json
+2025-10-02T12:51:26.9314713Z     /home/runner/.cargo/registry
+2025-10-02T12:51:26.9315013Z     /home/runner/.cargo/git
+2025-10-02T12:51:26.9315318Z     /home/runner/work/pixel-model2-rust/pixel-model2-rust/target
+2025-10-02T12:51:26.9315641Z Restore Key:
+2025-10-02T12:51:26.9315868Z     v0-rust-integration-tests-Linux-x64-3bcebdd4
+2025-10-02T12:51:26.9316154Z Cache Key:
+2025-10-02T12:51:26.9316405Z     v0-rust-integration-tests-Linux-x64-3bcebdd4-877f72a6
+2025-10-02T12:51:26.9316707Z .. Prefix:
+2025-10-02T12:51:26.9316937Z   - v0-rust-integration-tests-Linux-x64
+2025-10-02T12:51:26.9317392Z .. Environment considered:
+2025-10-02T12:51:26.9318136Z   - Rust Version: 1.90.0 x86_64-unknown-linux-gnu (1159e78c4747b02ef996e55082b704c09b970588)
+2025-10-02T12:51:26.9318559Z   - CARGO_HOME
+2025-10-02T12:51:26.9318760Z   - CARGO_INCREMENTAL
+2025-10-02T12:51:26.9318976Z   - CARGO_TERM_COLOR
+2025-10-02T12:51:26.9319187Z .. Lockfiles considered:
+2025-10-02T12:51:26.9319544Z   - /home/runner/work/pixel-model2-rust/pixel-model2-rust/Cargo.toml
+2025-10-02T12:51:26.9320227Z ##[endgroup]
+2025-10-02T12:51:26.9320348Z 
+2025-10-02T12:51:26.9320436Z ... Restoring cache ...
+2025-10-02T12:51:27.1950917Z Cache hit for: v0-rust-integration-tests-Linux-x64-3bcebdd4-877f72a6
+2025-10-02T12:51:28.4277310Z Received 37748736 of 613837085 (6.1%), 36.0 MBs/sec
+2025-10-02T12:51:29.4297728Z Received 176160768 of 613837085 (28.7%), 83.9 MBs/sec
+2025-10-02T12:51:30.4303139Z Received 352321536 of 613837085 (57.4%), 111.9 MBs/sec
+2025-10-02T12:51:31.4318290Z Received 499122176 of 613837085 (81.3%), 118.9 MBs/sec
+2025-10-02T12:51:32.4328866Z Received 609642781 of 613837085 (99.3%), 116.1 MBs/sec
+2025-10-02T12:51:32.6949667Z Received 613837085 of 613837085 (100.0%), 111.1 MBs/sec
+2025-10-02T12:51:32.6951517Z Cache Size: ~585 MB (613837085 B)
+2025-10-02T12:51:32.6992661Z [command]/usr/bin/tar -xf /home/runner/work/_temp/0ad2c965-4187-4f14-bad9-a156b077b823/cache.tzst -P -C /home/runner/work/pixel-model2-rust/pixel-model2-rust --use-compress-program unzstd
+2025-10-02T12:51:36.4306343Z Cache restored successfully
+2025-10-02T12:51:36.5449440Z Restored from cache key "v0-rust-integration-tests-Linux-x64-3bcebdd4-877f72a6" full match: true.
