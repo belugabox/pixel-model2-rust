@@ -1,10 +1,10 @@
 //! Pipeline de géométrie 3D SEGA Model 2
-//! 
+//!
 //! Implémente le système de transformation et rendu 3D authentique du SEGA Model 2,
 //! incluant les matrices de transformation, projection et clipping optimisés.
 
-use glam::{Vec3, Vec4, Mat4, Vec4Swizzles};
 use anyhow::Result;
+use glam::{Mat4, Vec3, Vec4, Vec4Swizzles};
 
 /// Triangle 3D avec tous les attributs Model 2
 #[derive(Debug, Clone)]
@@ -83,7 +83,7 @@ pub struct GeometryProcessor {
     pub projection_matrix: Mat4,
     pub model_matrix: Mat4,
     pub viewport_matrix: Mat4,
-    
+
     // Configuration de la caméra
     pub camera_position: Vec3,
     pub camera_target: Vec3,
@@ -92,12 +92,12 @@ pub struct GeometryProcessor {
     pub aspect_ratio: f32,
     pub near_plane: f32,
     pub far_plane: f32,
-    
+
     // Cache des matrices combinées
     view_projection_cache: Option<Mat4>,
     mvp_cache: Option<Mat4>,
     normal_matrix_cache: Option<Mat4>,
-    
+
     // Paramètres de rendu
     pub frustum_culling: bool,
     pub backface_culling: bool,
@@ -213,13 +213,13 @@ impl BoundingBox {
             max: Vec3::splat(f32::NEG_INFINITY),
         }
     }
-    
+
     /// Étend la bounding box pour inclure un point
     pub fn expand(&mut self, point: Vec3) {
         self.min = self.min.min(point);
         self.max = self.max.max(point);
     }
-    
+
     /// Teste l'intersection avec le frustum (simplifié)
     pub fn intersects_frustum(&self, mvp_matrix: &Mat4) -> bool {
         // Test basique - transforme les coins et teste s'ils sont dans le frustum
@@ -233,16 +233,20 @@ impl BoundingBox {
             Vec3::new(self.min.x, self.max.y, self.max.z),
             Vec3::new(self.max.x, self.max.y, self.max.z),
         ];
-        
+
         for corner in corners {
             let clip_pos = *mvp_matrix * Vec4::new(corner.x, corner.y, corner.z, 1.0);
-            if clip_pos.x >= -clip_pos.w && clip_pos.x <= clip_pos.w &&
-               clip_pos.y >= -clip_pos.w && clip_pos.y <= clip_pos.w &&
-               clip_pos.z >= 0.0 && clip_pos.z <= clip_pos.w {
+            if clip_pos.x >= -clip_pos.w
+                && clip_pos.x <= clip_pos.w
+                && clip_pos.y >= -clip_pos.w
+                && clip_pos.y <= clip_pos.w
+                && clip_pos.z >= 0.0
+                && clip_pos.z <= clip_pos.w
+            {
                 return true;
             }
         }
-        
+
         false
     }
 }
@@ -254,21 +258,22 @@ impl GeometryProcessor {
         let fov = 45.0_f32.to_radians();
         let near = 0.1;
         let far = 1000.0;
-        
+
         let camera_position = Vec3::new(0.0, 0.0, 5.0);
         let camera_target = Vec3::ZERO;
         let camera_up = Vec3::Y;
-        
+
         // Matrice de vue (look-at)
         let view_matrix = Mat4::look_at_rh(camera_position, camera_target, camera_up);
-        
+
         // Matrice de projection perspective
         let projection_matrix = Mat4::perspective_rh(fov, aspect_ratio, near, far);
-        
+
         // Matrice viewport (NDC vers coordonnées écran)
-        let viewport_matrix = Mat4::from_translation(Vec3::new(width as f32 / 2.0, height as f32 / 2.0, 0.0))
-            * Mat4::from_scale(Vec3::new(width as f32 / 2.0, -(height as f32) / 2.0, 1.0));
-        
+        let viewport_matrix =
+            Mat4::from_translation(Vec3::new(width as f32 / 2.0, height as f32 / 2.0, 0.0))
+                * Mat4::from_scale(Vec3::new(width as f32 / 2.0, -(height as f32) / 2.0, 1.0));
+
         Self {
             view_matrix,
             projection_matrix,
@@ -292,7 +297,7 @@ impl GeometryProcessor {
             fog_color: [0.7, 0.7, 0.9, 1.0], // Bleu clair
         }
     }
-    
+
     /// Configure la caméra avec position, cible et up vector
     pub fn set_camera(&mut self, position: Vec3, target: Vec3, up: Vec3) {
         self.camera_position = position;
@@ -301,7 +306,7 @@ impl GeometryProcessor {
         self.view_matrix = Mat4::look_at_rh(position, target, up);
         self.invalidate_cache();
     }
-    
+
     /// Configure la projection perspective
     pub fn set_perspective(&mut self, fov: f32, aspect: f32, near: f32, far: f32) {
         self.field_of_view = fov;
@@ -311,7 +316,7 @@ impl GeometryProcessor {
         self.projection_matrix = Mat4::perspective_rh(fov, aspect, near, far);
         self.invalidate_cache();
     }
-    
+
     /// Configure la matrice de modèle (transformation d'objet)
     pub fn set_model_matrix(&mut self, matrix: Mat4) {
         self.model_matrix = matrix;
@@ -329,66 +334,75 @@ impl GeometryProcessor {
         self.projection_matrix = matrix;
         self.invalidate_cache();
     }
-    
+
     /// Obtient la matrice MVP (Model-View-Projection) avec cache
     pub fn get_mvp_matrix(&mut self) -> Mat4 {
         if let Some(cached) = self.mvp_cache {
             return cached;
         }
-        
+
         let mvp = self.projection_matrix * self.view_matrix * self.model_matrix;
         self.mvp_cache = Some(mvp);
         mvp
     }
-    
+
     /// Obtient la matrice View-Projection avec cache
     pub fn get_view_projection_matrix(&mut self) -> Mat4 {
         if let Some(cached) = self.view_projection_cache {
             return cached;
         }
-        
+
         let vp = self.projection_matrix * self.view_matrix;
         self.view_projection_cache = Some(vp);
         vp
     }
-    
+
     /// Obtient la matrice normale pour l'éclairage
     pub fn get_normal_matrix(&mut self) -> Mat4 {
         if let Some(cached) = self.normal_matrix_cache {
             return cached;
         }
-        
+
         let normal_matrix = (self.view_matrix * self.model_matrix).inverse().transpose();
         self.normal_matrix_cache = Some(normal_matrix);
         normal_matrix
     }
-    
+
     /// Transforme un triangle complet par le pipeline 3D
     pub fn transform_triangle(&mut self, triangle: &Triangle3D) -> Result<TransformedTriangle> {
         let mvp_matrix = self.get_mvp_matrix();
         let normal_matrix = self.get_normal_matrix();
-        
+
         let mut transformed_vertices = [TransformedVertex::default(); 3];
-        
+
         for (i, vertex) in triangle.vertices.iter().enumerate() {
             // Transformation de position (vers clip space)
-            let clip_pos = mvp_matrix * Vec4::new(vertex.position.x, vertex.position.y, vertex.position.z, 1.0);
-            
+            let clip_pos = mvp_matrix
+                * Vec4::new(vertex.position.x, vertex.position.y, vertex.position.z, 1.0);
+
             // Transformation de normale
-            let world_normal = (normal_matrix * Vec4::new(vertex.normal.x, vertex.normal.y, vertex.normal.z, 0.0)).xyz().normalize();
-            
+            let world_normal = (normal_matrix
+                * Vec4::new(vertex.normal.x, vertex.normal.y, vertex.normal.z, 0.0))
+            .xyz()
+            .normalize();
+
             // Calcul du fog si activé
             let fog_factor = if self.fog_enabled {
-                let view_pos = (self.view_matrix * self.model_matrix * Vec4::new(vertex.position.x, vertex.position.y, vertex.position.z, 1.0)).z;
+                let view_pos = (self.view_matrix
+                    * self.model_matrix
+                    * Vec4::new(vertex.position.x, vertex.position.y, vertex.position.z, 1.0))
+                .z;
                 let fog_distance = -view_pos; // Distance à la caméra
                 ((fog_distance - self.fog_start) / (self.fog_end - self.fog_start)).clamp(0.0, 1.0)
             } else {
                 0.0
             };
-            
+
             transformed_vertices[i] = TransformedVertex {
                 clip_position: clip_pos,
-                world_position: (self.model_matrix * Vec4::new(vertex.position.x, vertex.position.y, vertex.position.z, 1.0)).xyz(),
+                world_position: (self.model_matrix
+                    * Vec4::new(vertex.position.x, vertex.position.y, vertex.position.z, 1.0))
+                .xyz(),
                 world_normal,
                 tex_coords: vertex.tex_coords,
                 color: vertex.color,
@@ -396,7 +410,7 @@ impl GeometryProcessor {
                 fog_factor,
             };
         }
-        
+
         Ok(TransformedTriangle {
             vertices: transformed_vertices,
             texture_id: triangle.texture_id,
@@ -404,65 +418,69 @@ impl GeometryProcessor {
             flags: triangle.flags,
         })
     }
-    
+
     /// Effectue le culling frustum sur un triangle
     pub fn frustum_cull_triangle(&self, triangle: &TransformedTriangle) -> bool {
         if !self.frustum_culling {
             return false; // Pas de culling
         }
-        
+
         // Test de culling basique : tous les vertices hors du frustum
         let mut all_outside = true;
         for vertex in &triangle.vertices {
             let pos = vertex.clip_position;
-            if pos.x >= -pos.w && pos.x <= pos.w &&
-               pos.y >= -pos.w && pos.y <= pos.w &&
-               pos.z >= 0.0 && pos.z <= pos.w {
+            if pos.x >= -pos.w
+                && pos.x <= pos.w
+                && pos.y >= -pos.w
+                && pos.y <= pos.w
+                && pos.z >= 0.0
+                && pos.z <= pos.w
+            {
                 all_outside = false;
                 break;
             }
         }
-        
+
         all_outside
     }
-    
+
     /// Effectue le backface culling
     pub fn backface_cull_triangle(&self, triangle: &TransformedTriangle) -> bool {
         if !self.backface_culling || triangle.flags.two_sided || triangle.flags.no_culling {
             return false; // Pas de culling
         }
-        
+
         // Calcul de la normale du triangle en screen space
         let v0 = triangle.vertices[0].clip_position;
         let v1 = triangle.vertices[1].clip_position;
         let v2 = triangle.vertices[2].clip_position;
-        
+
         let edge1 = v1.xyz() - v0.xyz();
         let edge2 = v2.xyz() - v0.xyz();
         let normal = edge1.cross(edge2);
-        
+
         // Si la normale pointe vers la caméra (z positif), garder le triangle
         normal.z < 0.0
     }
-    
+
     /// Clip un triangle contre les plans du frustum
     pub fn clip_triangle(&self, triangle: &TransformedTriangle) -> Vec<TransformedTriangle> {
         // Implémentation simplifiée - retourne le triangle original pour l'instant
         // Une vraie implémentation ferait du clipping contre chaque plan du frustum
         vec![triangle.clone()]
     }
-    
+
     /// Projection en coordonnées écran (perspective divide + viewport)
     pub fn project_to_screen(&self, triangle: &TransformedTriangle) -> ScreenTriangle {
         let mut screen_vertices = [ScreenVertex::default(); 3];
-        
+
         for (i, vertex) in triangle.vertices.iter().enumerate() {
             // Perspective divide
             let ndc = vertex.clip_position.xyz() / vertex.clip_position.w;
-            
+
             // Transformation viewport vers coordonnées écran
             let screen_pos = (self.viewport_matrix * Vec4::new(ndc.x, ndc.y, ndc.z, 1.0)).xyz();
-            
+
             screen_vertices[i] = ScreenVertex {
                 position: screen_pos,
                 world_position: vertex.world_position,
@@ -474,7 +492,7 @@ impl GeometryProcessor {
                 depth: ndc.z, // Depth pour Z-buffer
             };
         }
-        
+
         ScreenTriangle {
             vertices: screen_vertices,
             texture_id: triangle.texture_id,
@@ -482,7 +500,7 @@ impl GeometryProcessor {
             flags: triangle.flags,
         }
     }
-    
+
     /// Active/désactive le fog
     pub fn set_fog(&mut self, enabled: bool, start: f32, end: f32, color: [f32; 4]) {
         self.fog_enabled = enabled;
@@ -490,7 +508,7 @@ impl GeometryProcessor {
         self.fog_end = end;
         self.fog_color = color;
     }
-    
+
     /// Invalide les caches des matrices
     fn invalidate_cache(&mut self) {
         self.view_projection_cache = None;
@@ -522,13 +540,13 @@ mod tests {
     #[test]
     fn test_camera_configuration() {
         let mut processor = GeometryProcessor::new(800, 600);
-        
+
         let position = Vec3::new(0.0, 5.0, 10.0);
         let target = Vec3::new(0.0, 0.0, 0.0);
         let up = Vec3::Y;
-        
+
         processor.set_camera(position, target, up);
-        
+
         assert_eq!(processor.camera_position, position);
         assert_eq!(processor.camera_target, target);
         assert_eq!(processor.camera_up, up);
@@ -537,14 +555,14 @@ mod tests {
     #[test]
     fn test_perspective_configuration() {
         let mut processor = GeometryProcessor::new(800, 600);
-        
+
         let fov = 60.0_f32.to_radians();
         let aspect = 16.0 / 9.0;
         let near = 0.5;
         let far = 500.0;
-        
+
         processor.set_perspective(fov, aspect, near, far);
-        
+
         assert_eq!(processor.field_of_view, fov);
         assert_eq!(processor.aspect_ratio, aspect);
         assert_eq!(processor.near_plane, near);
@@ -554,7 +572,7 @@ mod tests {
     #[test]
     fn test_triangle_transformation() {
         let mut processor = GeometryProcessor::new(800, 600);
-        
+
         // Triangle simple
         let triangle = Triangle3D {
             vertices: [
@@ -587,13 +605,13 @@ mod tests {
             material_id: 0,
             flags: TriangleFlags::default(),
         };
-        
+
         let result = processor.transform_triangle(&triangle);
         assert!(result.is_ok());
-        
+
         let transformed = result.unwrap();
         assert_eq!(transformed.vertices.len(), 3);
-        
+
         // Vérifier que les coordonnées de texture sont préservées
         assert_eq!(transformed.vertices[0].tex_coords, [0.0, 0.0]);
         assert_eq!(transformed.vertices[1].tex_coords, [1.0, 0.0]);
@@ -603,11 +621,11 @@ mod tests {
     #[test]
     fn test_bounding_box() {
         let mut bbox = BoundingBox::empty();
-        
+
         bbox.expand(Vec3::new(1.0, 2.0, 3.0));
         bbox.expand(Vec3::new(-1.0, -2.0, -3.0));
         bbox.expand(Vec3::new(0.5, 1.5, 2.5));
-        
+
         assert_eq!(bbox.min, Vec3::new(-1.0, -2.0, -3.0));
         assert_eq!(bbox.max, Vec3::new(1.0, 2.0, 3.0));
     }
@@ -615,9 +633,9 @@ mod tests {
     #[test]
     fn test_fog_configuration() {
         let mut processor = GeometryProcessor::new(800, 600);
-        
+
         processor.set_fog(true, 5.0, 50.0, [0.5, 0.6, 0.8, 1.0]);
-        
+
         assert!(processor.fog_enabled);
         assert_eq!(processor.fog_start, 5.0);
         assert_eq!(processor.fog_end, 50.0);
@@ -627,7 +645,7 @@ mod tests {
     #[test]
     fn test_triangle_flags() {
         let flags = TriangleFlags::default();
-        
+
         assert!(!flags.transparent);
         assert!(!flags.two_sided);
         assert!(!flags.no_culling);
@@ -639,19 +657,19 @@ mod tests {
     #[test]
     fn test_mvp_matrix_cache() {
         let mut processor = GeometryProcessor::new(800, 600);
-        
+
         // Premier appel calcule la matrice
         let mvp1 = processor.get_mvp_matrix();
-        
+
         // Deuxième appel utilise le cache
         let mvp2 = processor.get_mvp_matrix();
-        
+
         assert_eq!(mvp1, mvp2);
-        
+
         // Changer la matrice model invalide le cache
         processor.set_model_matrix(Mat4::from_translation(Vec3::new(1.0, 0.0, 0.0)));
         let mvp3 = processor.get_mvp_matrix();
-        
+
         assert_ne!(mvp1, mvp3);
     }
 }

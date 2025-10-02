@@ -1,25 +1,25 @@
 //! Pixel Model 2 Rust - Émulateur SEGA Model 2
-//! 
+//!
 //! Cette bibliothèque fournit tous les composants nécessaires pour émuler
 //! le système d'arcade SEGA Model 2, incluant le CPU, GPU, audio et plus.
 
-pub mod cpu;
-pub mod memory;
-pub mod gpu;
 pub mod audio;
-pub mod input;
-pub mod rom;
-pub mod gui;
 pub mod config;
+pub mod cpu;
+pub mod gpu;
+pub mod gui;
+pub mod input;
+pub mod memory;
+pub mod rom;
 
-pub use cpu::*;
-pub use memory::*;
-pub use gpu::*;
 pub use audio::*;
-pub use input::*;
-pub use rom::*;
-pub use gui::*;
 pub use config::*;
+pub use cpu::*;
+pub use gpu::*;
+pub use gui::*;
+pub use input::*;
+pub use memory::*;
+pub use rom::*;
 
 /// Version de l'émulateur
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

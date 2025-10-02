@@ -1,7 +1,7 @@
 //! Configuration de l'émulateur
 
-use serde::{Deserialize, Serialize};
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
 use std::fs;
 
 /// Configuration principale de l'émulateur
@@ -104,13 +104,13 @@ impl EmulatorConfig {
         let config: EmulatorConfig = toml::from_str(&contents)?;
         Ok(config)
     }
-    
+
     pub fn save_to_file(&self, path: &str) -> Result<()> {
         let contents = toml::to_string_pretty(self)?;
         fs::write(path, contents)?;
         Ok(())
     }
-    
+
     pub fn load_or_default(path: &str) -> Self {
         Self::load_from_file(path).unwrap_or_default()
     }

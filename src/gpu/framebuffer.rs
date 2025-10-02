@@ -1,9 +1,9 @@
 //! Framebuffer virtuel émulant l'affichage Model 2
 
-use anyhow::Result;
-use wgpu::*;
 use super::geometry::TransformedTriangle;
 use super::texture::TextureManager;
+use anyhow::Result;
+use wgpu::*;
 
 /// Framebuffer virtuel
 pub struct Framebuffer {
@@ -21,7 +21,11 @@ impl Framebuffer {
     pub fn new(device: &Device, width: u32, height: u32) -> Self {
         let color_texture = device.create_texture(&TextureDescriptor {
             label: Some("Framebuffer Color"),
-            size: Extent3d { width, height, depth_or_array_layers: 1 },
+            size: Extent3d {
+                width,
+                height,
+                depth_or_array_layers: 1,
+            },
             mip_level_count: 1,
             sample_count: 1,
             dimension: TextureDimension::D2,
@@ -29,10 +33,14 @@ impl Framebuffer {
             usage: TextureUsages::RENDER_ATTACHMENT | TextureUsages::TEXTURE_BINDING,
             view_formats: &[],
         });
-        
+
         let depth_texture = device.create_texture(&TextureDescriptor {
             label: Some("Framebuffer Depth"),
-            size: Extent3d { width, height, depth_or_array_layers: 1 },
+            size: Extent3d {
+                width,
+                height,
+                depth_or_array_layers: 1,
+            },
             mip_level_count: 1,
             sample_count: 1,
             dimension: TextureDimension::D2,
@@ -40,12 +48,12 @@ impl Framebuffer {
             usage: TextureUsages::RENDER_ATTACHMENT,
             view_formats: &[],
         });
-        
+
         let color_texture_view = color_texture.create_view(&TextureViewDescriptor::default());
         let depth_texture_view = depth_texture.create_view(&TextureViewDescriptor::default());
-        
+
         let pixel_count = (width * height) as usize;
-        
+
         Self {
             width,
             height,
@@ -57,18 +65,22 @@ impl Framebuffer {
             depth_data: vec![1.0; pixel_count],
         }
     }
-    
+
     pub fn resize(&mut self, device: &Device, width: u32, height: u32) -> Result<()> {
         *self = Self::new(device, width, height);
         Ok(())
     }
-    
+
     pub fn clear(&mut self) {
         self.color_data.fill(0);
         self.depth_data.fill(1.0);
     }
-    
-    pub fn rasterize_triangle(&mut self, _triangle: &TransformedTriangle, _texture_manager: &TextureManager) -> Result<()> {
+
+    pub fn rasterize_triangle(
+        &mut self,
+        _triangle: &TransformedTriangle,
+        _texture_manager: &TextureManager,
+    ) -> Result<()> {
         // Rasterisation software simple pour l'émulation précise
         // Implementation simplifiée pour la démo
         Ok(())

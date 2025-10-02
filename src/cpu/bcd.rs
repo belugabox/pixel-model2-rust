@@ -42,7 +42,7 @@ impl BcdUnit {
     pub fn bcd_to_binary(bcd: u32) -> u32 {
         let mut result = 0;
         let mut multiplier = 1;
-        
+
         for i in 0..8 {
             let nibble = (bcd >> (i * 4)) & 0xF;
             if nibble > 9 {
@@ -51,7 +51,7 @@ impl BcdUnit {
             result += nibble * multiplier;
             multiplier *= 10;
         }
-        
+
         result
     }
 
@@ -59,14 +59,14 @@ impl BcdUnit {
     pub fn binary_to_bcd(mut binary: u32) -> u32 {
         let mut result = 0;
         let mut shift = 0;
-        
+
         while binary > 0 && shift < 32 {
             let digit = binary % 10;
             result |= digit << shift;
             binary /= 10;
             shift += 4;
         }
-        
+
         result
     }
 
@@ -85,13 +85,13 @@ impl BcdUnit {
         let mut result = 0;
         let mut carry = 0;
         let mut final_carry = false;
-        
+
         for i in 0..8 {
             let nibble_a = (a >> (i * 4)) & 0xF;
             let nibble_b = (b >> (i * 4)) & 0xF;
-            
+
             let sum = nibble_a + nibble_b + carry;
-            
+
             if sum > 9 {
                 result |= (sum - 10) << (i * 4);
                 carry = 1;
@@ -99,7 +99,7 @@ impl BcdUnit {
                 result |= sum << (i * 4);
                 carry = 0;
             }
-            
+
             // Si on sort de la boucle avec un carry
             if i == 7 && carry == 1 {
                 final_carry = true;
@@ -130,13 +130,13 @@ impl BcdUnit {
         let mut result = 0;
         let mut borrow = 0;
         let mut final_borrow = false;
-        
+
         for i in 0..8 {
             let nibble_a = (a >> (i * 4)) & 0xF;
             let nibble_b = (b >> (i * 4)) & 0xF;
-            
+
             let mut diff = nibble_a as i32 - nibble_b as i32 - borrow;
-            
+
             if diff < 0 {
                 diff += 16; // Emprunter du nibble suivant
                 result |= ((diff - 6) as u32 & 0xF) << (i * 4);
@@ -171,15 +171,16 @@ impl BcdUnit {
         // Ajuster chaque nibble
         for i in 0..8 {
             let nibble = (result >> (i * 4)) & 0xF;
-            
+
             if nibble > 9 || (i == 0 && carry_in) {
                 let adjusted = nibble + 6;
                 result = (result & !(0xF << (i * 4))) | ((adjusted & 0xF) << (i * 4));
-                
+
                 if adjusted > 0xF {
                     if i < 7 {
                         let next_nibble = (result >> ((i + 1) * 4)) & 0xF;
-                        result = (result & !(0xF << ((i + 1) * 4))) | ((next_nibble + 1) << ((i + 1) * 4));
+                        result = (result & !(0xF << ((i + 1) * 4)))
+                            | ((next_nibble + 1) << ((i + 1) * 4));
                     } else {
                         carry_out = true;
                     }
@@ -206,12 +207,12 @@ impl BcdUnit {
         // Ajuster chaque nibble
         for i in 0..8 {
             let nibble = (result >> (i * 4)) & 0xF;
-            
+
             if nibble > 9 || (i == 0 && borrow_in) {
                 let adjusted = nibble.wrapping_sub(6);
                 result = (result & !(0xF << (i * 4))) | ((adjusted & 0xF) << (i * 4));
                 adjust_needed = true;
-                
+
                 if nibble < 6 {
                     borrow_out = true;
                 }
@@ -244,7 +245,7 @@ mod tests {
     fn test_bcd_conversion() {
         assert_eq!(BcdUnit::bcd_to_binary(0x1234), 1234);
         assert_eq!(BcdUnit::bcd_to_binary(0x9876), 9876);
-        
+
         assert_eq!(BcdUnit::binary_to_bcd(1234), 0x1234);
         assert_eq!(BcdUnit::binary_to_bcd(9876), 0x9876);
     }
