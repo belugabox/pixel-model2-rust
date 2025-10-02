@@ -12,7 +12,13 @@ fn main() -> anyhow::Result<()> {
 
     let report = rom_system.generate_status_report()?;
     println!("✓ Système ROM initialisé");
-    println!("✓ {} ROMs détectées", report.lines().find(|l| l.contains("ROMs trouvées")).unwrap_or("0"));
+    println!(
+        "✓ {} ROMs détectées",
+        report
+            .lines()
+            .find(|l| l.contains("ROMs trouvées"))
+            .unwrap_or("0")
+    );
 
     // 2. Test du chargement d'une ROM
     println!("\n💿 Test de chargement ROM:");
@@ -20,8 +26,11 @@ fn main() -> anyhow::Result<()> {
         Ok(rom_set) => {
             println!("✅ Virtua Fighter 2 chargé avec succès");
             println!("   - {} ROMs chargées", rom_set.roms.len());
-            println!("   - Taille totale: {} octets", rom_set.memory_map.total_size);
-        },
+            println!(
+                "   - Taille totale: {} octets",
+                rom_set.memory_map.total_size
+            );
+        }
         Err(e) => {
             println!("⚠️  Échec du chargement (checksums): {}", e);
             println!("   (Ceci est normal - les checksums sont des valeurs de test)");
@@ -43,7 +52,10 @@ fn main() -> anyhow::Result<()> {
     // 4. Test de la mémoire
     println!("\n💾 Test de la mémoire:");
     let mut memory = memory::Model2Memory::new();
-    println!("✅ Mémoire Model 2 initialisée ({} MB RAM)", MAIN_RAM_SIZE / (1024*1024));
+    println!(
+        "✅ Mémoire Model 2 initialisée ({} MB RAM)",
+        MAIN_RAM_SIZE / (1024 * 1024)
+    );
 
     // Test écriture/lecture
     memory.write_u32(0x0000_1000, 0x12345678)?;

@@ -1,0 +1,75 @@
+﻿2025-10-02T12:50:53.4087489Z ##[group]Run actions/checkout@v4
+2025-10-02T12:50:53.4088549Z with:
+2025-10-02T12:50:53.4088990Z   repository: belugabox/pixel-model2-rust
+2025-10-02T12:50:53.4089728Z   token: ***
+2025-10-02T12:50:53.4090097Z   ssh-strict: true
+2025-10-02T12:50:53.4090480Z   ssh-user: git
+2025-10-02T12:50:53.4090862Z   persist-credentials: true
+2025-10-02T12:50:53.4091305Z   clean: true
+2025-10-02T12:50:53.4091696Z   sparse-checkout-cone-mode: true
+2025-10-02T12:50:53.4092207Z   fetch-depth: 1
+2025-10-02T12:50:53.4092579Z   fetch-tags: false
+2025-10-02T12:50:53.4092965Z   show-progress: true
+2025-10-02T12:50:53.4093362Z   lfs: false
+2025-10-02T12:50:53.4093721Z   submodules: false
+2025-10-02T12:50:53.4094144Z   set-safe-directory: true
+2025-10-02T12:50:53.4094765Z env:
+2025-10-02T12:50:53.4095120Z   CARGO_TERM_COLOR: always
+2025-10-02T12:50:53.4095554Z ##[endgroup]
+2025-10-02T12:50:53.5760729Z Syncing repository: belugabox/pixel-model2-rust
+2025-10-02T12:50:53.5762784Z ##[group]Getting Git version info
+2025-10-02T12:50:53.5763655Z Working directory is 'D:\a\pixel-model2-rust\pixel-model2-rust'
+2025-10-02T12:50:53.6630527Z [command]"C:\Program Files\Git\bin\git.exe" version
+2025-10-02T12:50:53.7907439Z git version 2.51.0.windows.1
+2025-10-02T12:50:53.7959052Z ##[endgroup]
+2025-10-02T12:50:53.7980118Z Temporarily overriding HOME='D:\a\_temp\784a8463-ba91-45db-aca8-bf2e660d2719' before making global git config changes
+2025-10-02T12:50:53.7984147Z Adding repository directory to the temporary git global config as a safe directory
+2025-10-02T12:50:53.7991911Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\pixel-model2-rust\pixel-model2-rust
+2025-10-02T12:50:53.8289212Z Deleting the contents of 'D:\a\pixel-model2-rust\pixel-model2-rust'
+2025-10-02T12:50:53.8295995Z ##[group]Initializing the repository
+2025-10-02T12:50:53.8305336Z [command]"C:\Program Files\Git\bin\git.exe" init D:\a\pixel-model2-rust\pixel-model2-rust
+2025-10-02T12:50:53.8950442Z Initialized empty Git repository in D:/a/pixel-model2-rust/pixel-model2-rust/.git/
+2025-10-02T12:50:53.8993724Z [command]"C:\Program Files\Git\bin\git.exe" remote add origin https://github.com/belugabox/pixel-model2-rust
+2025-10-02T12:50:53.9304471Z ##[endgroup]
+2025-10-02T12:50:53.9305297Z ##[group]Disabling automatic garbage collection
+2025-10-02T12:50:53.9313514Z [command]"C:\Program Files\Git\bin\git.exe" config --local gc.auto 0
+2025-10-02T12:50:53.9606686Z ##[endgroup]
+2025-10-02T12:50:53.9607379Z ##[group]Setting up auth
+2025-10-02T12:50:53.9622031Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2025-10-02T12:50:53.9929781Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2025-10-02T12:50:54.7932548Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-10-02T12:50:54.8247208Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2025-10-02T12:50:55.3955406Z [command]"C:\Program Files\Git\bin\git.exe" config --local http.https://github.com/.extraheader "AUTHORIZATION: basic ***"
+2025-10-02T12:50:55.4272890Z ##[endgroup]
+2025-10-02T12:50:55.4274114Z ##[group]Fetching the repository
+2025-10-02T12:50:55.4288380Z [command]"C:\Program Files\Git\bin\git.exe" -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +08872952fc208661dc31f64c5ce5408715406f86:refs/remotes/pull/1/merge
+2025-10-02T12:50:56.1202633Z From https://github.com/belugabox/pixel-model2-rust
+2025-10-02T12:50:56.1203451Z  * [new ref]         08872952fc208661dc31f64c5ce5408715406f86 -> pull/1/merge
+2025-10-02T12:50:56.1380795Z ##[endgroup]
+2025-10-02T12:50:56.1384293Z ##[group]Determining the checkout info
+2025-10-02T12:50:56.1384809Z ##[endgroup]
+2025-10-02T12:50:56.1394255Z [command]"C:\Program Files\Git\bin\git.exe" sparse-checkout disable
+2025-10-02T12:50:56.1726291Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all extensions.worktreeConfig
+2025-10-02T12:50:56.2032438Z ##[group]Checking out the ref
+2025-10-02T12:50:56.2033160Z [command]"C:\Program Files\Git\bin\git.exe" checkout --progress --force refs/remotes/pull/1/merge
+2025-10-02T12:50:56.2696670Z Note: switching to 'refs/remotes/pull/1/merge'.
+2025-10-02T12:50:56.2697211Z 
+2025-10-02T12:50:56.2697578Z You are in 'detached HEAD' state. You can look around, make experimental
+2025-10-02T12:50:56.2698685Z changes and commit them, and you can discard any commits you make in this
+2025-10-02T12:50:56.2699353Z state without impacting any branches by switching back to a branch.
+2025-10-02T12:50:56.2699652Z 
+2025-10-02T12:50:56.2699883Z If you want to create a new branch to retain commits you create, you may
+2025-10-02T12:50:56.2700403Z do so (now or later) by using -c with the switch command. Example:
+2025-10-02T12:50:56.2700664Z 
+2025-10-02T12:50:56.2700773Z   git switch -c <new-branch-name>
+2025-10-02T12:50:56.2700950Z 
+2025-10-02T12:50:56.2701056Z Or undo this operation with:
+2025-10-02T12:50:56.2701218Z 
+2025-10-02T12:50:56.2701305Z   git switch -
+2025-10-02T12:50:56.2702301Z 
+2025-10-02T12:50:56.2702542Z Turn off this advice by setting config variable advice.detachedHead to false
+2025-10-02T12:50:56.2702848Z 
+2025-10-02T12:50:56.2703199Z HEAD is now at 0887295 Merge 38225a1a218f8c2dd2156c3d164a192f1398ca52 into 6265fd16b087c0701f70e3b4ceba98de7cea09dd
+2025-10-02T12:50:56.2728885Z ##[endgroup]
+2025-10-02T12:50:56.3052427Z [command]"C:\Program Files\Git\bin\git.exe" log -1 --format=%H
+2025-10-02T12:50:56.3321477Z 08872952fc208661dc31f64c5ce5408715406f86

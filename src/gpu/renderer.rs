@@ -1,10 +1,10 @@
 //! Moteur de rendu moderne utilisant wgpu pour émuler le GPU Model 2
 
-use wgpu::*;
-use wgpu::util::DeviceExt;
-use winit::window::Window;
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use std::sync::Arc;
+use wgpu::util::DeviceExt;
+use wgpu::*;
+use winit::window::Window;
 
 /// Vertex simple pour le rendu sans textures
 #[repr(C)]
@@ -80,52 +80,52 @@ impl Default for Matrices {
 pub struct WgpuRenderer {
     /// Instance wgpu
     pub instance: Instance,
-    
+
     /// Fenêtre (pour maintenir la référence)
     pub window: Arc<Window>,
-    
+
     /// Surface de rendu
     pub surface: Surface<'static>,
-    
+
     /// Device wgpu
     pub device: Arc<Device>,
-    
+
     /// Queue de commandes
     pub queue: Arc<Queue>,
-    
+
     /// Configuration de surface
     pub surface_config: SurfaceConfiguration,
-    
+
     /// Shader pour le rendu de triangles simples (sans textures)
     pub triangle_simple_shader: ShaderModule,
-    
+
     /// Pipeline de rendu triangles simples
     pub triangle_simple_pipeline: RenderPipeline,
-    
+
     /// Shader pour le rendu de triangles avec textures
     pub triangle_shader: ShaderModule,
-    
+
     /// Shader pour le blit final
     pub blit_shader: ShaderModule,
-    
+
     /// Pipeline de rendu triangles
     pub triangle_pipeline: RenderPipeline,
-    
+
     /// Pipeline de blit
     pub blit_pipeline: RenderPipeline,
-    
+
     /// Layout des bind groups pour les textures
     pub texture_bind_group_layout: BindGroupLayout,
-    
+
     /// Layout des bind groups pour les matrices
     pub matrix_bind_group_layout: BindGroupLayout,
-    
+
     /// Buffer pour les matrices de transformation
     pub matrix_buffer: Buffer,
-    
+
     /// Bind group pour les matrices
     pub matrix_bind_group: BindGroup,
-    
+
     /// Sampler pour les textures
     pub texture_sampler: Sampler,
 }
@@ -134,7 +134,7 @@ impl WgpuRenderer {
     /// Crée un nouveau rendu wgpu
     pub async fn new(window: Arc<Window>) -> Result<Self> {
         let size = window.inner_size();
-        
+
         // Créer l'instance wgpu
         let instance = Instance::new(InstanceDescriptor {
             backends: Backends::all(),
@@ -142,38 +142,46 @@ impl WgpuRenderer {
             dx12_shader_compiler: Dx12Compiler::Fxc,
             gles_minor_version: wgpu::Gles3MinorVersion::Automatic,
         });
-        
+
         // Créer la surface - utiliser unsafe pour étendre la lifetime
         let surface = unsafe {
-            std::mem::transmute::<Surface<'_>, Surface<'static>>(
-                instance.create_surface(&*window)?
-            )
+            std::mem::transmute::<Surface<'_>, Surface<'static>>(instance.create_surface(&*window)?)
         };
-        
+
         // Demander un adaptateur
-        let adapter = instance.request_adapter(&RequestAdapterOptions {
-            power_preference: PowerPreference::HighPerformance,
-            compatible_surface: Some(&surface),
-            force_fallback_adapter: false,
-        }).await.ok_or_else(|| anyhow!("Impossible de trouver un adaptateur graphique"))?;
-        
+        let adapter = instance
+            .request_adapter(&RequestAdapterOptions {
+                power_preference: PowerPreference::HighPerformance,
+                compatible_surface: Some(&surface),
+                force_fallback_adapter: false,
+            })
+            .await
+            .ok_or_else(|| anyhow!("Impossible de trouver un adaptateur graphique"))?;
+
         // Créer le device et la queue
-        let (device, queue) = adapter.request_device(&DeviceDescriptor {
-            required_features: Features::empty(),
-            required_limits: Limits::default(),
-            label: None,
-        }, None).await?;
-        
+        let (device, queue) = adapter
+            .request_device(
+                &DeviceDescriptor {
+                    required_features: Features::empty(),
+                    required_limits: Limits::default(),
+                    label: None,
+                },
+                None,
+            )
+            .await?;
+
         let device = Arc::new(device);
         let queue = Arc::new(queue);
-        
+
         // Configuration de la surface
         let surface_caps = surface.get_capabilities(&adapter);
-        let surface_format = surface_caps.formats.iter()
+        let surface_format = surface_caps
+            .formats
+            .iter()
             .copied()
             .find(|f| f.is_srgb())
             .unwrap_or(surface_caps.formats[0]);
-            
+
         let surface_config = SurfaceConfiguration {
             usage: TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
@@ -184,52 +192,53 @@ impl WgpuRenderer {
             view_formats: vec![],
             desired_maximum_frame_latency: 2,
         };
-        
+
         surface.configure(&device, &surface_config);
-        
+
         // Créer les shaders
         let triangle_shader = device.create_shader_module(ShaderModuleDescriptor {
             label: Some("Triangle Shader"),
             source: ShaderSource::Wgsl(include_str!("shaders/triangle.wgsl").into()),
         });
-        
+
         let triangle_simple_shader = device.create_shader_module(ShaderModuleDescriptor {
             label: Some("Triangle Simple Shader"),
             source: ShaderSource::Wgsl(include_str!("shaders/triangle_simple.wgsl").into()),
         });
-        
+
         let blit_shader = device.create_shader_module(ShaderModuleDescriptor {
             label: Some("Blit Shader"),
             source: ShaderSource::Wgsl(include_str!("shaders/blit.wgsl").into()),
         });
-        
+
         // Créer le layout pour les textures
-        let texture_bind_group_layout = device.create_bind_group_layout(&BindGroupLayoutDescriptor {
-            entries: &[
-                BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: ShaderStages::FRAGMENT,
-                    ty: BindingType::Texture {
-                        multisampled: false,
-                        view_dimension: TextureViewDimension::D2,
-                        sample_type: TextureSampleType::Float { filterable: true },
+        let texture_bind_group_layout =
+            device.create_bind_group_layout(&BindGroupLayoutDescriptor {
+                entries: &[
+                    BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: ShaderStages::FRAGMENT,
+                        ty: BindingType::Texture {
+                            multisampled: false,
+                            view_dimension: TextureViewDimension::D2,
+                            sample_type: TextureSampleType::Float { filterable: true },
+                        },
+                        count: None,
                     },
-                    count: None,
-                },
-                BindGroupLayoutEntry {
-                    binding: 1,
-                    visibility: ShaderStages::FRAGMENT,
-                    ty: BindingType::Sampler(SamplerBindingType::Filtering),
-                    count: None,
-                },
-            ],
-            label: Some("texture_bind_group_layout"),
-        });
-        
+                    BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: ShaderStages::FRAGMENT,
+                        ty: BindingType::Sampler(SamplerBindingType::Filtering),
+                        count: None,
+                    },
+                ],
+                label: Some("texture_bind_group_layout"),
+            });
+
         // Créer le layout pour les matrices
-        let matrix_bind_group_layout = device.create_bind_group_layout(&BindGroupLayoutDescriptor {
-            entries: &[
-                BindGroupLayoutEntry {
+        let matrix_bind_group_layout =
+            device.create_bind_group_layout(&BindGroupLayoutDescriptor {
+                entries: &[BindGroupLayoutEntry {
                     binding: 0,
                     visibility: ShaderStages::VERTEX,
                     ty: BindingType::Buffer {
@@ -238,30 +247,27 @@ impl WgpuRenderer {
                         min_binding_size: None,
                     },
                     count: None,
-                },
-            ],
-            label: Some("matrix_bind_group_layout"),
-        });
-        
+                }],
+                label: Some("matrix_bind_group_layout"),
+            });
+
         // Créer le buffer pour les matrices
         let matrix_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Matrix Buffer"),
             contents: bytemuck::bytes_of(&Matrices::default()),
             usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
         });
-        
+
         // Créer le bind group pour les matrices
         let matrix_bind_group = device.create_bind_group(&BindGroupDescriptor {
             layout: &matrix_bind_group_layout,
-            entries: &[
-                BindGroupEntry {
-                    binding: 0,
-                    resource: matrix_buffer.as_entire_binding(),
-                },
-            ],
+            entries: &[BindGroupEntry {
+                binding: 0,
+                resource: matrix_buffer.as_entire_binding(),
+            }],
             label: Some("Matrix Bind Group"),
         });
-        
+
         // Créer le sampler
         let texture_sampler = device.create_sampler(&SamplerDescriptor {
             address_mode_u: AddressMode::ClampToEdge,
@@ -272,14 +278,14 @@ impl WgpuRenderer {
             mipmap_filter: FilterMode::Nearest,
             ..Default::default()
         });
-        
+
         // Créer les pipelines de rendu
         let triangle_pipeline_layout = device.create_pipeline_layout(&PipelineLayoutDescriptor {
             label: Some("Triangle Pipeline Layout"),
             bind_group_layouts: &[&texture_bind_group_layout, &matrix_bind_group_layout],
             push_constant_ranges: &[],
         });
-        
+
         let triangle_pipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
             label: Some("Triangle Pipeline"),
             layout: Some(&triangle_pipeline_layout),
@@ -301,7 +307,9 @@ impl WgpuRenderer {
                             format: VertexFormat::Float32x2,
                         },
                         VertexAttribute {
-                            offset: (std::mem::size_of::<[f32; 3]>() + std::mem::size_of::<[f32; 2]>()) as BufferAddress,
+                            offset: (std::mem::size_of::<[f32; 3]>()
+                                + std::mem::size_of::<[f32; 2]>())
+                                as BufferAddress,
                             shader_location: 2,
                             format: VertexFormat::Float32x4,
                         },
@@ -334,14 +342,15 @@ impl WgpuRenderer {
             },
             multiview: None,
         });
-        
+
         // Pipeline pour triangles simples (sans textures)
-        let triangle_simple_pipeline_layout = device.create_pipeline_layout(&PipelineLayoutDescriptor {
-            label: Some("Triangle Simple Pipeline Layout"),
-            bind_group_layouts: &[],
-            push_constant_ranges: &[],
-        });
-        
+        let triangle_simple_pipeline_layout =
+            device.create_pipeline_layout(&PipelineLayoutDescriptor {
+                label: Some("Triangle Simple Pipeline Layout"),
+                bind_group_layouts: &[],
+                push_constant_ranges: &[],
+            });
+
         let triangle_simple_pipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
             label: Some("Triangle Simple Pipeline"),
             layout: Some(&triangle_simple_pipeline_layout),
@@ -391,13 +400,13 @@ impl WgpuRenderer {
             },
             multiview: None,
         });
-        
+
         let blit_pipeline_layout = device.create_pipeline_layout(&PipelineLayoutDescriptor {
             label: Some("Blit Pipeline Layout"),
             bind_group_layouts: &[&texture_bind_group_layout],
             push_constant_ranges: &[],
         });
-        
+
         let blit_pipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
             label: Some("Blit Pipeline"),
             layout: Some(&blit_pipeline_layout),
@@ -432,7 +441,7 @@ impl WgpuRenderer {
             },
             multiview: None,
         });
-        
+
         Ok(Self {
             instance,
             window,
@@ -453,7 +462,7 @@ impl WgpuRenderer {
             texture_sampler,
         })
     }
-    
+
     /// Redimensionner la surface
     pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
         if new_size.width > 0 && new_size.height > 0 {
@@ -462,18 +471,30 @@ impl WgpuRenderer {
             self.surface.configure(&self.device, &self.surface_config);
         }
     }
-    
+
     /// Rendu d'une frame
-    pub fn render(&self) -> Result<()> {
-        // Obtenir la texture de surface
-        let output = self.surface.get_current_texture()?;
-        let view = output.texture.create_view(&TextureViewDescriptor::default());
-        
+    pub fn render(&mut self) -> Result<()> {
+        // Obtenir la texture de surface - gérer les erreurs de surface
+        let output = match self.surface.get_current_texture() {
+            Ok(output) => output,
+            Err(SurfaceError::Lost | SurfaceError::Outdated) => {
+                // Reconfigurer la surface si elle est perdue ou obsolète
+                self.surface.configure(&self.device, &self.surface_config);
+                return Ok(());
+            }
+            Err(e) => return Err(anyhow!("Erreur de surface GPU: {:?}", e)),
+        };
+        let view = output
+            .texture
+            .create_view(&TextureViewDescriptor::default());
+
         // Créer l'encodeur de commandes
-        let mut encoder = self.device.create_command_encoder(&CommandEncoderDescriptor {
-            label: Some("Render Encoder"),
-        });
-        
+        let mut encoder = self
+            .device
+            .create_command_encoder(&CommandEncoderDescriptor {
+                label: Some("Render Encoder"),
+            });
+
         // Pass de rendu de base
         {
             let _render_pass = encoder.begin_render_pass(&RenderPassDescriptor {
@@ -496,35 +517,49 @@ impl WgpuRenderer {
                 occlusion_query_set: None,
             });
         }
-        
+
         // Soumettre les commandes
         self.queue.submit(std::iter::once(encoder.finish()));
         output.present();
-        
+
         Ok(())
     }
 
     /// Rendre des triangles simples sans textures
-    pub fn render_simple_triangles(&self, vertices: &[SimpleVertex]) -> Result<()> {
+    pub fn render_simple_triangles(&mut self, vertices: &[SimpleVertex]) -> Result<()> {
         if vertices.is_empty() || vertices.len() % 3 != 0 {
             return Ok(()); // Rien à rendre ou nombre de sommets invalide
         }
 
         // Créer un buffer pour les sommets
-        let vertex_buffer = self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Simple Triangle Vertex Buffer"),
-            contents: bytemuck::cast_slice(vertices),
-            usage: BufferUsages::VERTEX,
-        });
+        let vertex_buffer = self
+            .device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Simple Triangle Vertex Buffer"),
+                contents: bytemuck::cast_slice(vertices),
+                usage: BufferUsages::VERTEX,
+            });
 
-        // Obtenir la texture de surface
-        let output = self.surface.get_current_texture()?;
-        let view = output.texture.create_view(&TextureViewDescriptor::default());
+        // Obtenir la texture de surface - gérer les erreurs de surface
+        let output = match self.surface.get_current_texture() {
+            Ok(output) => output,
+            Err(SurfaceError::Lost | SurfaceError::Outdated) => {
+                // Reconfigurer la surface si elle est perdue ou obsolète
+                self.surface.configure(&self.device, &self.surface_config);
+                return Ok(());
+            }
+            Err(e) => return Err(anyhow!("Erreur de surface GPU: {:?}", e)),
+        };
+        let view = output
+            .texture
+            .create_view(&TextureViewDescriptor::default());
 
         // Créer l'encodeur de commandes
-        let mut encoder = self.device.create_command_encoder(&CommandEncoderDescriptor {
-            label: Some("Simple Triangle Render Encoder"),
-        });
+        let mut encoder = self
+            .device
+            .create_command_encoder(&CommandEncoderDescriptor {
+                label: Some("Simple Triangle Render Encoder"),
+            });
 
         // Pass de rendu
         {
@@ -564,26 +599,45 @@ impl WgpuRenderer {
     }
 
     /// Rendre des triangles texturés
-    pub fn render_textured_triangles(&self, vertices: &[TexturedVertex], texture_view: &TextureView, bind_group: &BindGroup) -> Result<()> {
+    pub fn render_textured_triangles(
+        &mut self,
+        vertices: &[TexturedVertex],
+        _texture_view: &TextureView,
+        bind_group: &BindGroup,
+    ) -> Result<()> {
         if vertices.is_empty() || vertices.len() % 3 != 0 {
             return Ok(()); // Rien à rendre ou nombre de sommets invalide
         }
 
         // Créer un buffer pour les sommets
-        let vertex_buffer = self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Textured Triangle Vertex Buffer"),
-            contents: bytemuck::cast_slice(vertices),
-            usage: BufferUsages::VERTEX,
-        });
+        let vertex_buffer = self
+            .device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Textured Triangle Vertex Buffer"),
+                contents: bytemuck::cast_slice(vertices),
+                usage: BufferUsages::VERTEX,
+            });
 
-        // Obtenir la texture de surface
-        let output = self.surface.get_current_texture()?;
-        let view = output.texture.create_view(&TextureViewDescriptor::default());
+        // Obtenir la texture de surface - gérer les erreurs de surface
+        let output = match self.surface.get_current_texture() {
+            Ok(output) => output,
+            Err(SurfaceError::Lost | SurfaceError::Outdated) => {
+                // Reconfigurer la surface si elle est perdue ou obsolète
+                self.surface.configure(&self.device, &self.surface_config);
+                return Ok(());
+            }
+            Err(e) => return Err(anyhow!("Erreur de surface GPU: {:?}", e)),
+        };
+        let view = output
+            .texture
+            .create_view(&TextureViewDescriptor::default());
 
         // Créer l'encodeur de commandes
-        let mut encoder = self.device.create_command_encoder(&CommandEncoderDescriptor {
-            label: Some("Textured Triangle Render Encoder"),
-        });
+        let mut encoder = self
+            .device
+            .create_command_encoder(&CommandEncoderDescriptor {
+                label: Some("Textured Triangle Render Encoder"),
+            });
 
         // Pass de rendu
         {
@@ -642,13 +696,14 @@ impl WgpuRenderer {
         });
         Ok(bind_group)
     }
-    
+
     /// Mettre à jour les matrices de transformation
     pub fn update_matrices(&self, matrices: &Matrices) -> Result<()> {
-        self.queue.write_buffer(&self.matrix_buffer, 0, bytemuck::bytes_of(matrices));
+        self.queue
+            .write_buffer(&self.matrix_buffer, 0, bytemuck::bytes_of(matrices));
         Ok(())
     }
-    
+
     /// Définir la matrice modèle
     pub fn set_model_matrix(&self, model: [[f32; 4]; 4]) -> Result<()> {
         let mut matrices = Matrices::default();
@@ -657,14 +712,14 @@ impl WgpuRenderer {
         matrices.model = model;
         self.update_matrices(&matrices)
     }
-    
+
     /// Définir la matrice de vue
     pub fn set_view_matrix(&self, view: [[f32; 4]; 4]) -> Result<()> {
         let mut matrices = Matrices::default();
         matrices.view = view;
         self.update_matrices(&matrices)
     }
-    
+
     /// Définir la matrice de projection
     pub fn set_projection_matrix(&self, projection: [[f32; 4]; 4]) -> Result<()> {
         let mut matrices = Matrices::default();

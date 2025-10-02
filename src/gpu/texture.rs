@@ -1,12 +1,12 @@
 //! Système de textures SEGA Model 2
-//! 
+//!
 //! Implémente le chargement et la gestion des textures avec support des formats
 //! propriétaires SEGA : 4bpp, 8bpp, 16bpp avec palettes.
 
 use anyhow::Result;
-use wgpu::*;
 use std::collections::HashMap;
 use std::sync::Arc;
+use wgpu::*;
 
 /// Gestionnaire de textures avec support des formats SEGA
 pub struct TextureManager {
@@ -106,7 +106,7 @@ impl TextureManager {
                 },
             ],
         });
-        
+
         // Créer le sampler avec paramètres SEGA Model 2
         let sampler = device.create_sampler(&SamplerDescriptor {
             address_mode_u: AddressMode::Repeat,
@@ -117,7 +117,7 @@ impl TextureManager {
             mipmap_filter: FilterMode::Linear,
             ..Default::default()
         });
-        
+
         Self {
             textures: HashMap::new(),
             palettes: HashMap::new(),
@@ -127,7 +127,7 @@ impl TextureManager {
             sampler,
         }
     }
-    
+
     /// Charge une texture simple (pour compatibilité)
     pub fn load_texture(&mut self, id: u32, data: &[u8], width: u32, height: u32) -> Result<()> {
         // Crée une texture RGBA8 basique depuis les données brutes
@@ -139,25 +139,30 @@ impl TextureManager {
             data_offset: 0,
             stride: Some(width * 4),
         };
-        
+
         self.load_texture_from_rom(id, data, params)
     }
 
     /// Charge une texture depuis des données ROM avec décodage automatique
-    pub fn load_texture_from_rom(&mut self, id: u32, rom_data: &[u8], params: TextureDecodeParams) -> Result<()> {
+    pub fn load_texture_from_rom(
+        &mut self,
+        id: u32,
+        rom_data: &[u8],
+        params: TextureDecodeParams,
+    ) -> Result<()> {
         // Décoder la texture selon le format SEGA
         let raw_texture = self.decode_sega_texture(rom_data, &params)?;
-        
+
         // Convertir en RGBA8 pour wgpu
         let rgba_data = self.convert_to_rgba8(&raw_texture)?;
-        
+
         // Créer la texture wgpu
         let texture = self.device.create_texture(&TextureDescriptor {
             label: Some(&format!("SEGA Texture {}", id)),
-            size: Extent3d { 
-                width: raw_texture.width, 
-                height: raw_texture.height, 
-                depth_or_array_layers: 1 
+            size: Extent3d {
+                width: raw_texture.width,
+                height: raw_texture.height,
+                depth_or_array_layers: 1,
             },
             mip_level_count: 1,
             sample_count: 1,
@@ -166,7 +171,7 @@ impl TextureManager {
             usage: TextureUsages::TEXTURE_BINDING | TextureUsages::COPY_DST,
             view_formats: &[],
         });
-        
+
         // Copier les données converties
         self.queue.write_texture(
             ImageCopyTexture {
@@ -181,16 +186,16 @@ impl TextureManager {
                 bytes_per_row: Some(4 * raw_texture.width),
                 rows_per_image: Some(raw_texture.height),
             },
-            Extent3d { 
-                width: raw_texture.width, 
-                height: raw_texture.height, 
-                depth_or_array_layers: 1 
+            Extent3d {
+                width: raw_texture.width,
+                height: raw_texture.height,
+                depth_or_array_layers: 1,
             },
         );
-        
+
         // Créer une vue texture
         let view = texture.create_view(&TextureViewDescriptor::default());
-        
+
         // Créer le bind group avec la vraie layout
         let bind_group = self.device.create_bind_group(&BindGroupDescriptor {
             label: Some(&format!("SEGA Texture {} Bind Group", id)),
@@ -206,21 +211,24 @@ impl TextureManager {
                 },
             ],
         });
-        
+
         // Stocker la texture décodée avec tous les champs
-        self.textures.insert(id, TextureData {
-            texture,
-            view,
-            bind_group,
-            width: raw_texture.width,
-            height: raw_texture.height,
-            format: params.format,
-            palette_id: params.palette_offset.map(|offset| offset as u32),
-        });
-        
+        self.textures.insert(
+            id,
+            TextureData {
+                texture,
+                view,
+                bind_group,
+                width: raw_texture.width,
+                height: raw_texture.height,
+                format: params.format,
+                palette_id: params.palette_offset.map(|offset| offset as u32),
+            },
+        );
+
         Ok(())
     }
-    
+
     pub fn get_texture(&self, id: u32) -> Option<&TextureData> {
         self.textures.get(&id)
     }
@@ -230,27 +238,21 @@ impl TextureManager {
     }
 
     /// Décode une texture SEGA depuis les données ROM
-    fn decode_sega_texture(&self, rom_data: &[u8], params: &TextureDecodeParams) -> Result<RawTexture> {
+    fn decode_sega_texture(
+        &self,
+        rom_data: &[u8],
+        params: &TextureDecodeParams,
+    ) -> Result<RawTexture> {
         let data_start = params.data_offset;
         let texture_data = &rom_data[data_start..];
 
         match params.format {
-            SegaTextureFormat::Palette4bpp => {
-                self.decode_4bpp_indexed(texture_data, params)
-            }
-            SegaTextureFormat::Palette8bpp => {
-                self.decode_8bpp_indexed(texture_data, params)
-            }
+            SegaTextureFormat::Palette4bpp => self.decode_4bpp_indexed(texture_data, params),
+            SegaTextureFormat::Palette8bpp => self.decode_8bpp_indexed(texture_data, params),
 
-            SegaTextureFormat::Rgb565 => {
-                self.decode_rgb565(texture_data, params)
-            }
-            SegaTextureFormat::Rgba4444 => {
-                self.decode_rgba4444(texture_data, params)
-            }
-            SegaTextureFormat::Rgba8888 => {
-                self.decode_rgba8888(texture_data, params)
-            }
+            SegaTextureFormat::Rgb565 => self.decode_rgb565(texture_data, params),
+            SegaTextureFormat::Rgba4444 => self.decode_rgba4444(texture_data, params),
+            SegaTextureFormat::Rgba8888 => self.decode_rgba8888(texture_data, params),
         }
     }
 
@@ -263,11 +265,11 @@ impl TextureManager {
             if i >= data.len() {
                 break;
             }
-            
+
             let byte = data[i];
-            let pixel1 = (byte & 0x0F) as u8;        // 4 bits inférieurs
+            let pixel1 = (byte & 0x0F) as u8; // 4 bits inférieurs
             let pixel2 = ((byte & 0xF0) >> 4) as u8; // 4 bits supérieurs
-            
+
             pixels.push(pixel1);
             if pixels.len() < pixel_count {
                 pixels.push(pixel2);
@@ -367,7 +369,7 @@ impl TextureManager {
                         let r = ((rgb565 >> 11) & 0x1F) as u8;
                         let g = ((rgb565 >> 5) & 0x3F) as u8;
                         let b = (rgb565 & 0x1F) as u8;
-                        
+
                         // Expansion 5/6 bits -> 8 bits
                         rgba_data.push((r << 3) | (r >> 2));
                         rgba_data.push((g << 2) | (g >> 4));
@@ -385,7 +387,7 @@ impl TextureManager {
                         let g = ((rgba4444 >> 8) & 0x0F) as u8;
                         let b = ((rgba4444 >> 4) & 0x0F) as u8;
                         let a = (rgba4444 & 0x0F) as u8;
-                        
+
                         // Expansion 4 bits -> 8 bits
                         rgba_data.push((r << 4) | r);
                         rgba_data.push((g << 4) | g);
@@ -408,11 +410,11 @@ impl TextureManager {
         // Pour l'instant, palette basique arc-en-ciel
         let normalized_index = (index as f32) / 255.0;
         let hue = normalized_index * 360.0;
-        
+
         // Conversion HSV vers RGB simplifiée
         let c = 1.0; // Saturation maximale
         let x = c * (1.0 - ((hue / 60.0) % 2.0 - 1.0).abs());
-        
+
         let (r_prime, g_prime, b_prime) = match hue as i32 / 60 {
             0 => (c, x, 0.0),
             1 => (x, c, 0.0),
@@ -421,7 +423,7 @@ impl TextureManager {
             4 => (x, 0.0, c),
             _ => (c, 0.0, x),
         };
-        
+
         [
             (r_prime * 255.0) as u8,
             (g_prime * 255.0) as u8,

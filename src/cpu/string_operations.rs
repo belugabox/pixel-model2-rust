@@ -47,7 +47,12 @@ impl StringUnit {
                 1 => memory.read_u8(current_src)? as u32,
                 2 => memory.read_u16(current_src)? as u32,
                 4 => memory.read_u32(current_src)?,
-                _ => return Err(anyhow::anyhow!("Taille d'élément non supportée: {}", element_size)),
+                _ => {
+                    return Err(anyhow::anyhow!(
+                        "Taille d'élément non supportée: {}",
+                        element_size
+                    ))
+                }
             };
 
             match element_size {
@@ -97,7 +102,12 @@ impl StringUnit {
                 1 => memory.read_u8(current_src1)? as u32,
                 2 => memory.read_u16(current_src1)? as u32,
                 4 => memory.read_u32(current_src1)?,
-                _ => return Err(anyhow::anyhow!("Taille d'élément non supportée: {}", element_size)),
+                _ => {
+                    return Err(anyhow::anyhow!(
+                        "Taille d'élément non supportée: {}",
+                        element_size
+                    ))
+                }
             };
 
             let value2 = match element_size {
@@ -151,7 +161,12 @@ impl StringUnit {
                 1 => memory.read_u8(current_src)? as u32,
                 2 => memory.read_u16(current_src)? as u32,
                 4 => memory.read_u32(current_src)?,
-                _ => return Err(anyhow::anyhow!("Taille d'élément non supportée: {}", element_size)),
+                _ => {
+                    return Err(anyhow::anyhow!(
+                        "Taille d'élément non supportée: {}",
+                        element_size
+                    ))
+                }
             };
 
             bytes_processed += element_size as u32;
@@ -196,7 +211,12 @@ impl StringUnit {
                 1 => memory.write_u8(current_dst, fill_value as u8)?,
                 2 => memory.write_u16(current_dst, fill_value as u16)?,
                 4 => memory.write_u32(current_dst, fill_value)?,
-                _ => return Err(anyhow::anyhow!("Taille d'élément non supportée: {}", element_size)),
+                _ => {
+                    return Err(anyhow::anyhow!(
+                        "Taille d'élément non supportée: {}",
+                        element_size
+                    ))
+                }
             }
 
             bytes_processed += element_size as u32;
@@ -230,7 +250,12 @@ impl StringUnit {
                 1 => memory.read_u8(current_src)? as u32,
                 2 => memory.read_u16(current_src)? as u32,
                 4 => memory.read_u32(current_src)?,
-                _ => return Err(anyhow::anyhow!("Taille d'élément non supportée: {}", element_size)),
+                _ => {
+                    return Err(anyhow::anyhow!(
+                        "Taille d'élément non supportée: {}",
+                        element_size
+                    ))
+                }
             };
 
             if value == 0 {
@@ -253,7 +278,7 @@ mod tests {
     #[test]
     fn test_string_move() {
         let mut memory = Ram::new(0x10000);
-        
+
         // Source: "Hello"
         memory.write_u8(0x1000, b'H').unwrap();
         memory.write_u8(0x1001, b'e').unwrap();
@@ -263,7 +288,7 @@ mod tests {
         memory.write_u8(0x1005, 0).unwrap(); // Terminateur
 
         let result = StringUnit::string_move(&mut memory, 0x1000, 0x2000, 10, 1).unwrap();
-        
+
         assert_eq!(result.bytes_processed, 6); // 5 caractères + terminateur
         assert_eq!(memory.read_u8(0x2000).unwrap(), b'H');
         assert_eq!(memory.read_u8(0x2004).unwrap(), b'o');
@@ -273,7 +298,7 @@ mod tests {
     #[test]
     fn test_string_compare() {
         let mut memory = Ram::new(0x10000);
-        
+
         // Deux chaînes identiques
         let text = b"Test";
         for (i, &byte) in text.iter().enumerate() {
@@ -291,7 +316,7 @@ mod tests {
     #[test]
     fn test_string_scan() {
         let mut memory = Ram::new(0x10000);
-        
+
         // Chaîne: "Hello"
         let text = b"Hello";
         for (i, &byte) in text.iter().enumerate() {

@@ -1,8 +1,8 @@
 //! Système de gestion mémoire pour le SEGA Model 2
-//! 
+//!
 //! Le Model 2 possède plusieurs types de mémoire mappée :
 //! - RAM principale (8MB)
-//! - VRAM (4MB) 
+//! - VRAM (4MB)
 //! - RAM audio (512KB)
 //! - Zones ROM
 //! - Registres I/O
@@ -12,9 +12,9 @@ pub mod mapping;
 pub mod ram;
 pub mod rom;
 
-use anyhow::{Result, anyhow};
-use std::collections::HashMap;
+use anyhow::{anyhow, Result};
 use std::cell::RefCell;
+use std::collections::HashMap;
 
 pub use interface::*;
 pub use mapping::*;
@@ -29,10 +29,10 @@ pub use rom::*;
 pub struct GpuCommandBuffer {
     /// Commandes en attente de traitement
     commands: Vec<GpuCommand>,
-    
+
     /// Capacité maximale du buffer
     max_capacity: usize,
-    
+
     /// Statistiques de performance
     stats: CommandBufferStats,
 }
@@ -59,129 +59,148 @@ impl GpuCommandBuffer {
             },
         }
     }
-    
+
     /// Ajoute une commande au buffer
     pub fn push(&mut self, command: GpuCommand) {
         self.commands.push(command);
-        
+
         // Si le buffer est plein, traiter automatiquement
         if self.commands.len() >= self.max_capacity {
             self.flush();
         }
     }
-    
+
     /// Vide le buffer et retourne les commandes triées
     pub fn flush(&mut self) -> Vec<GpuCommand> {
         if self.commands.is_empty() {
             return Vec::new();
         }
-        
+
         // Prendre possession des commandes
         let commands = std::mem::take(&mut self.commands);
-        
+
         // Trier les commandes pour optimisation
         let sorted_commands = self.optimize_commands(commands);
-        
+
         // Mettre à jour les statistiques
         let batch_size = sorted_commands.len();
         self.stats.total_commands_processed += batch_size as u64;
         self.stats.batches_processed += 1;
         self.stats.max_batch_size = self.stats.max_batch_size.max(batch_size);
-        self.stats.average_batch_size = self.stats.total_commands_processed as f32 / self.stats.batches_processed as f32;
-        
+        self.stats.average_batch_size =
+            self.stats.total_commands_processed as f32 / self.stats.batches_processed as f32;
+
         sorted_commands
     }
-    
+
     /// Optimise l'ordre des commandes pour de meilleures performances
-    fn optimize_commands(&self, mut commands: Vec<GpuCommand>) -> Vec<GpuCommand> {
+    fn optimize_commands(&self, commands: Vec<GpuCommand>) -> Vec<GpuCommand> {
         // Stratégie d'optimisation avancée :
         // 1. Éliminer les commandes redondantes (mêmes matrices, mêmes états)
         // 2. Grouper les changements d'état
         // 3. Grouper les chargements de textures
         // 4. Grouper les appels de dessin
-        
+
         let mut optimized = Vec::with_capacity(commands.len());
-        
+
         // Extraire et dédupliquer les commandes par type
         let mut state_commands = Vec::new();
         let mut texture_commands = Vec::new();
         let mut draw_commands = Vec::new();
         let mut other_commands = Vec::new();
-        
+
         // Maps pour éviter les doublons
         let mut seen_matrices = std::collections::HashSet::new();
         let mut seen_render_states = std::collections::HashSet::new();
         let mut seen_textures = std::collections::HashSet::new();
-        
+
         for command in commands {
             match &command {
                 GpuCommand::SetModelMatrix(matrix) => {
-                    let key = (0, matrix[0] as u32, matrix[1] as u32, matrix[2] as u32, matrix[3] as u32);
+                    let key = (
+                        0,
+                        matrix[0] as u32,
+                        matrix[1] as u32,
+                        matrix[2] as u32,
+                        matrix[3] as u32,
+                    );
                     if seen_matrices.insert(key) {
                         state_commands.push(command);
                     }
-                },
+                }
                 GpuCommand::SetViewMatrix(matrix) => {
-                    let key = (1, matrix[0] as u32, matrix[1] as u32, matrix[2] as u32, matrix[3] as u32);
+                    let key = (
+                        1,
+                        matrix[0] as u32,
+                        matrix[1] as u32,
+                        matrix[2] as u32,
+                        matrix[3] as u32,
+                    );
                     if seen_matrices.insert(key) {
                         state_commands.push(command);
                     }
-                },
+                }
                 GpuCommand::SetProjectionMatrix(matrix) => {
-                    let key = (2, matrix[0] as u32, matrix[1] as u32, matrix[2] as u32, matrix[3] as u32);
+                    let key = (
+                        2,
+                        matrix[0] as u32,
+                        matrix[1] as u32,
+                        matrix[2] as u32,
+                        matrix[3] as u32,
+                    );
                     if seen_matrices.insert(key) {
                         state_commands.push(command);
                     }
-                },
+                }
                 GpuCommand::SetRenderState { state, enabled } => {
                     let key = (*state as u32, *enabled as u32);
                     if seen_render_states.insert(key) {
                         state_commands.push(command);
                     }
-                },
+                }
                 GpuCommand::LoadTexture { id, .. } => {
                     if seen_textures.insert(*id) {
                         texture_commands.push(command);
                     }
-                },
+                }
                 GpuCommand::LoadTextureFromRom { id, .. } => {
                     if seen_textures.insert(*id) {
                         texture_commands.push(command);
                     }
-                },
-                GpuCommand::DrawTriangle { .. } | 
-                GpuCommand::DrawQuad { .. } |
-                GpuCommand::DrawLine { .. } => {
+                }
+                GpuCommand::DrawTriangle { .. }
+                | GpuCommand::DrawQuad { .. }
+                | GpuCommand::DrawLine { .. } => {
                     draw_commands.push(command);
-                },
+                }
                 _ => other_commands.push(command),
             }
         }
-        
+
         // Réorganiser : état -> textures -> autres -> dessin
         optimized.extend(state_commands);
         optimized.extend(texture_commands);
         optimized.extend(other_commands);
         optimized.extend(draw_commands);
-        
+
         optimized
     }
-    
+
     /// Retourne le nombre de commandes en attente
     pub fn len(&self) -> usize {
         self.commands.len()
     }
-    
+
     /// Vérifie si le buffer est vide
     pub fn is_empty(&self) -> bool {
         self.commands.is_empty()
     }
-    
+
     /// Obtient les statistiques du buffer
     pub fn stats(&self) -> &CommandBufferStats {
         &self.stats
     }
-    
+
     /// Vide complètement le buffer sans retourner les commandes
     pub fn clear(&mut self) {
         self.commands.clear();
@@ -193,34 +212,34 @@ impl GpuCommandBuffer {
 pub struct IoRegisters {
     /// Registre de contrôle des interruptions (0xC0000000)
     pub interrupt_control: u32,
-    
+
     /// Registre de statut des interruptions (0xC0000004)
     pub interrupt_status: u32,
-    
+
     /// Timer principal (0xC0000010)
     pub timer_main: u32,
-    
+
     /// Timer de sous-système (0xC0000014)
     pub timer_sub: u32,
-    
+
     /// Registre de contrôle GPU (0xC0000020)
     pub gpu_control: u32,
-    
+
     /// Registre de statut GPU (0xC0000024)
     pub gpu_status: u32,
-    
+
     /// Registre de commande GPU (0xC0000028)
     pub gpu_command: u32,
-    
+
     /// Registre de contrôle audio (0xC0000030)
     pub audio_control: u32,
-    
+
     /// Registre d'entrée (0xC0000040)
     pub input_data: u32,
-    
+
     /// Registre de contrôle d'entrée (0xC0000044)
     pub input_control: u32,
-    
+
     /// Compteur de cycles CPU pour timing
     cycle_counter: u64,
 }
@@ -241,7 +260,7 @@ impl IoRegisters {
             cycle_counter: 0,
         }
     }
-    
+
     /// Lit un registre I/O
     pub fn read_register(&self, offset: u32) -> u32 {
         match offset {
@@ -258,7 +277,7 @@ impl IoRegisters {
             _ => 0x00000000,
         }
     }
-    
+
     /// Écrit dans un registre I/O
     pub fn write_register(&mut self, offset: u32, value: u32) -> Option<GpuCommand> {
         match offset {
@@ -273,7 +292,7 @@ impl IoRegisters {
                 // Pour l'instant, traiter les commandes GPU simples
                 // TODO: Implémenter un système de commandes plus sophistiqué
                 return Some(self.decode_gpu_command(value));
-            },
+            }
             0x30 => self.audio_control = value,
             0x40 => self.input_data = value,
             0x44 => self.input_control = value,
@@ -281,12 +300,12 @@ impl IoRegisters {
         }
         None
     }
-    
+
     /// Décode une commande GPU (version étendue)
     fn decode_gpu_command(&self, command: u32) -> GpuCommand {
         // Extraire le type de commande des bits de poids fort
         let cmd_type = (command >> 24) & 0xFF;
-        
+
         match cmd_type {
             0x00 => {
                 // Clear screen - commande simple
@@ -294,12 +313,12 @@ impl IoRegisters {
                 let g = ((command >> 8) & 0xFF) as f32 / 255.0;
                 let b = (command & 0xFF) as f32 / 255.0;
                 let a = 1.0; // Alpha par défaut
-                GpuCommand::ClearScreen { 
-                    color: [r, g, b, a], 
-                    depth: 1.0, 
-                    stencil: 0 
+                GpuCommand::ClearScreen {
+                    color: [r, g, b, a],
+                    depth: 1.0,
+                    stencil: 0,
                 }
-            },
+            }
             0x01 => {
                 // Set render state
                 let state_bits = (command >> 16) & 0xFF;
@@ -315,64 +334,61 @@ impl IoRegisters {
                     0x80 => RenderStateType::BackfaceCulling,
                     _ => RenderStateType::ZBuffer, // Défaut
                 };
-                GpuCommand::SetRenderState { state: state_type, enabled }
-            },
+                GpuCommand::SetRenderState {
+                    state: state_type,
+                    enabled,
+                }
+            }
             0x02 => {
                 // Load texture (placeholder - nécessiterait plus de données)
-                GpuCommand::LoadTexture { 
-                    id: (command >> 16) & 0xFF, 
+                GpuCommand::LoadTexture {
+                    id: (command >> 16) & 0xFF,
                     data: vec![], // Données vides pour l'instant
-                    width: 64, 
-                    height: 64 
+                    width: 64,
+                    height: 64,
                 }
-            },
+            }
             0x10 => {
                 // Set model matrix (placeholder - nécessiterait lecture de données supplémentaires)
                 GpuCommand::SetModelMatrix([
-                    1.0, 0.0, 0.0, 0.0,
-                    0.0, 1.0, 0.0, 0.0,
-                    0.0, 0.0, 1.0, 0.0,
-                    0.0, 0.0, 0.0, 1.0,
+                    1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
                 ])
-            },
+            }
             0x11 => {
                 // Set view matrix (placeholder)
                 GpuCommand::SetViewMatrix([
-                    1.0, 0.0, 0.0, 0.0,
-                    0.0, 1.0, 0.0, 0.0,
-                    0.0, 0.0, 1.0, 0.0,
-                    0.0, 0.0, -2.0, 1.0,
+                    1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, -2.0, 1.0,
                 ])
-            },
+            }
             0x12 => {
                 // Set projection matrix (placeholder)
                 GpuCommand::SetProjectionMatrix([
-                    1.0, 0.0, 0.0, 0.0,
-                    0.0, 1.0, 0.0, 0.0,
-                    0.0, 0.0, 1.0, 0.0,
-                    0.0, 0.0, 0.0, 1.0,
+                    1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
                 ])
-            },
+            }
             _ => {
                 // Commande inconnue - utiliser clear screen par défaut
-                println!("GPU: Commande inconnue {:08X}, utilisation de ClearScreen par défaut", command);
-                GpuCommand::ClearScreen { 
-                    color: [0.0, 0.0, 0.0, 1.0], 
-                    depth: 1.0, 
-                    stencil: 0 
+                println!(
+                    "GPU: Commande inconnue {:08X}, utilisation de ClearScreen par défaut",
+                    command
+                );
+                GpuCommand::ClearScreen {
+                    color: [0.0, 0.0, 0.0, 1.0],
+                    depth: 1.0,
+                    stencil: 0,
                 }
             }
         }
     }
-    
+
     /// Met à jour les timers et autres registres périodiques
     pub fn update(&mut self, cycles: u32, cpu: &mut crate::cpu::NecV60) {
         self.cycle_counter = self.cycle_counter.wrapping_add(cycles as u64);
-        
+
         // Mise à jour des timers (simplifiée)
         self.timer_main = self.timer_main.wrapping_add(cycles);
         self.timer_sub = self.timer_sub.wrapping_add(cycles / 4); // Timer plus lent
-        
+
         // Générer des interruptions périodiques (VBLANK à ~60Hz)
         if self.cycle_counter % (25_000_000 / 60) == 0 {
             self.interrupt_status |= 0x00000001; // VBLANK interrupt
@@ -386,75 +402,125 @@ impl IoRegisters {
 pub enum GpuCommand {
     /// Définit une matrice de modèle
     SetModelMatrix([f32; 16]),
-    
+
     /// Définit une matrice de vue
     SetViewMatrix([f32; 16]),
-    
+
     /// Définit une matrice de projection
     SetProjectionMatrix([f32; 16]),
-    
+
     /// Définit la matrice de texture
     SetTextureMatrix([f32; 16]),
-    
+
     /// Charge une texture
-    LoadTexture { id: u32, data: Vec<u8>, width: u32, height: u32 },
-    
+    LoadTexture {
+        id: u32,
+        data: Vec<u8>,
+        width: u32,
+        height: u32,
+    },
+
     /// Charge une texture depuis la ROM
-    LoadTextureFromRom { id: u32, rom_offset: u32, width: u32, height: u32, format: TextureFormat },
-    
+    LoadTextureFromRom {
+        id: u32,
+        rom_offset: u32,
+        width: u32,
+        height: u32,
+        format: TextureFormat,
+    },
+
     /// Dessine un triangle texturé
-    DrawTriangle { vertices: [GpuVertex; 3], texture_id: Option<u32> },
-    
+    DrawTriangle {
+        vertices: [GpuVertex; 3],
+        texture_id: Option<u32>,
+    },
+
     /// Dessine un quad texturé
-    DrawQuad { vertices: [GpuVertex; 4], texture_id: Option<u32> },
-    
+    DrawQuad {
+        vertices: [GpuVertex; 4],
+        texture_id: Option<u32>,
+    },
+
     /// Dessine une ligne
     DrawLine { start: GpuVertex, end: GpuVertex },
-    
+
     /// Définit l'état de rendu
-    SetRenderState { state: RenderStateType, enabled: bool },
-    
+    SetRenderState {
+        state: RenderStateType,
+        enabled: bool,
+    },
+
     /// Définit les paramètres d'éclairage
-    SetLighting { light_id: u32, position: [f32; 3], color: [f32; 3], intensity: f32 },
-    
+    SetLighting {
+        light_id: u32,
+        position: [f32; 3],
+        color: [f32; 3],
+        intensity: f32,
+    },
+
     /// Définit les paramètres de brouillard
-    SetFog { enabled: bool, start: f32, end: f32, color: [f32; 4], mode: FogMode },
-    
+    SetFog {
+        enabled: bool,
+        start: f32,
+        end: f32,
+        color: [f32; 4],
+        mode: FogMode,
+    },
+
     /// Définit le viewport
-    SetViewport { x: u32, y: u32, width: u32, height: u32 },
-    
+    SetViewport {
+        x: u32,
+        y: u32,
+        width: u32,
+        height: u32,
+    },
+
     /// Définit les plans de clipping
     SetClipPlanes { near: f32, far: f32 },
-    
+
     /// Efface l'écran ou le framebuffer
-    ClearScreen { color: [f32; 4], depth: f32, stencil: u8 },
-    
+    ClearScreen {
+        color: [f32; 4],
+        depth: f32,
+        stencil: u8,
+    },
+
     /// Définit le mode de blending
-    SetBlendMode { src_factor: BlendFactor, dst_factor: BlendFactor },
-    
+    SetBlendMode {
+        src_factor: BlendFactor,
+        dst_factor: BlendFactor,
+    },
+
     /// Définit le test de profondeur
     SetDepthTest { enabled: bool, func: DepthFunc },
-    
+
     /// Définit le culling
     SetCulling { mode: CullMode },
-    
+
     /// Définit la couleur ambiante
     SetAmbientColor { color: [f32; 3] },
-    
+
     /// Définit les paramètres de texture environment
-    SetTextureEnvironment { env_mode: TexEnvMode, combine_rgb: TexCombineMode },
-    
+    SetTextureEnvironment {
+        env_mode: TexEnvMode,
+        combine_rgb: TexCombineMode,
+    },
+
     /// Commence une liste de display
     BeginDisplayList { id: u32 },
-    
+
     /// Termine une liste de display
     EndDisplayList { id: u32 },
-    
+
     /// Exécute une liste de display
     ExecuteDisplayList { id: u32 },
-    
+
     /// Définit les paramètres de transformation géométrique
-    SetGeometryParams { scale: [f32; 3], rotation: [f32; 3], translation: [f32; 3] },
+    SetGeometryParams {
+        scale: [f32; 3],
+        rotation: [f32; 3],
+        translation: [f32; 3],
+    },
 }
 
 /// Formats de texture supportés par SEGA Model 2
@@ -547,14 +613,30 @@ pub enum TexCombineMode {
 /// Représentation d'un vertex pour les commandes GPU
 #[derive(Debug, Clone, Copy)]
 pub struct GpuVertex {
-    pub x: f32, pub y: f32, pub z: f32,
-    pub r: f32, pub g: f32, pub b: f32, pub a: f32,
-    pub u: f32, pub v: f32,
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
+    pub r: f32,
+    pub g: f32,
+    pub b: f32,
+    pub a: f32,
+    pub u: f32,
+    pub v: f32,
 }
 
 impl GpuVertex {
     pub fn new(x: f32, y: f32, z: f32, r: f32, g: f32, b: f32, a: f32, u: f32, v: f32) -> Self {
-        Self { x, y, z, r, g, b, a, u, v }
+        Self {
+            x,
+            y,
+            z,
+            r,
+            g,
+            b,
+            a,
+            u,
+            v,
+        }
     }
 }
 
@@ -563,34 +645,34 @@ impl GpuVertex {
 pub struct Model2Memory {
     /// RAM principale (8MB)
     pub main_ram: Ram,
-    
+
     /// VRAM (4MB)
     pub video_ram: Ram,
-    
+
     /// RAM audio (512KB)
     pub audio_ram: Ram,
-    
+
     /// Gestionnaire de mappage mémoire
     pub mapping: MemoryMap,
-    
+
     /// ROMs chargées
     pub roms: HashMap<String, Rom>,
-    
+
     /// Cache des accès mémoire pour optimisation
     cache: RefCell<MemoryCache>,
-    
+
     /// Activation du cache
     cache_enabled: bool,
 
     /// Registres I/O
     io_registers: IoRegisters,
-    
+
     /// Système audio SCSP
     // pub scsp_audio: ScspAudio,
-    
+
     /// File de commandes GPU en attente
     gpu_command_queue: Vec<GpuCommand>,
-    
+
     /// Buffer de commandes GPU pour traitement par lots
     pub gpu_command_buffer: GpuCommandBuffer,
 }
@@ -599,9 +681,9 @@ impl Model2Memory {
     /// Crée un nouveau système mémoire Model 2
     pub fn new() -> Self {
         Self {
-            main_ram: Ram::new(8 * 1024 * 1024), // 8MB
+            main_ram: Ram::new(8 * 1024 * 1024),  // 8MB
             video_ram: Ram::new(4 * 1024 * 1024), // 4MB
-            audio_ram: Ram::new(512 * 1024), // 512KB
+            audio_ram: Ram::new(512 * 1024),      // 512KB
             mapping: MemoryMap::new_model2(),
             roms: HashMap::new(),
             cache: RefCell::new(MemoryCache::new()),
@@ -615,37 +697,37 @@ impl Model2Memory {
             gpu_command_buffer: GpuCommandBuffer::new(),
         }
     }
-    
+
     /// Charge une ROM dans le système
     pub fn load_rom(&mut self, name: String, data: Vec<u8>) -> Result<()> {
         let rom = Rom::new(data);
         self.roms.insert(name, rom);
         Ok(())
     }
-    
+
     /// Vide le cache mémoire
     pub fn clear_cache(&mut self) {
         if let Ok(mut cache) = self.cache.try_borrow_mut() {
             cache.clear();
         }
     }
-    
+
     /// Met à jour les registres I/O (appelé périodiquement)
     pub fn update_io_registers(&mut self, cycles: u32, cpu: &mut crate::cpu::NecV60) {
         self.io_registers.update(cycles, cpu);
         // self.scsp_audio.update(cycles);
     }
-    
+
     /// Enfile une commande GPU
     pub fn enqueue_gpu_command(&mut self, command: GpuCommand) {
         self.gpu_command_buffer.push(command);
     }
-    
+
     /// Traite toutes les commandes GPU en attente
     pub fn process_gpu_commands(&mut self) -> Vec<GpuCommand> {
         self.gpu_command_buffer.flush()
     }
-    
+
     /// Force le vidage du buffer de commandes GPU (pour synchronisation frame)
     pub fn flush_gpu_command_buffer(&mut self) -> Vec<GpuCommand> {
         self.gpu_command_buffer.flush()
@@ -662,7 +744,7 @@ impl MemoryInterface for Model2Memory {
                 }
             }
         }
-        
+
         // Déterminer la région mémoire et l'offset
         let result = if let Some((region, offset)) = self.mapping.resolve(address) {
             match region {
@@ -675,30 +757,30 @@ impl MemoryInterface for Model2Memory {
                     } else {
                         Ok(0xFF)
                     }
-                },
+                }
                 MemoryRegion::GraphicsRom => {
                     if let Some(rom) = self.roms.get("graphics") {
                         rom.read_u8(offset)
                     } else {
                         Ok(0xFF)
                     }
-                },
+                }
                 MemoryRegion::AudioRom => {
                     if let Some(rom) = self.roms.get("audio") {
                         rom.read_u8(offset)
                     } else {
                         Ok(0xFF)
                     }
-                },
+                }
                 MemoryRegion::IoRegisters => {
                     // Vérifier si c'est un registre SCSP (0x400-0x5FF)
                     // if offset >= 0x400 && offset < 0x600 {
                     //     Ok(self.scsp_audio.read_register(offset - 0x400) as u8)
                     // } else {
-                        // Lecture des registres I/O standard
-                        Ok(self.io_registers.read_register(offset) as u8)
+                    // Lecture des registres I/O standard
+                    Ok(self.io_registers.read_register(offset) as u8)
                     // }
-                },
+                }
             }
         } else {
             Ok(0xFF) // Lecture dans une zone non mappée
@@ -723,7 +805,7 @@ impl MemoryInterface for Model2Memory {
                 }
             }
         }
-        
+
         // Déterminer la région mémoire et l'offset
         let result = if let Some((region, offset)) = self.mapping.resolve(address) {
             match region {
@@ -736,30 +818,30 @@ impl MemoryInterface for Model2Memory {
                     } else {
                         Ok(0xFFFF)
                     }
-                },
+                }
                 MemoryRegion::GraphicsRom => {
                     if let Some(rom) = self.roms.get("graphics") {
                         rom.read_u16(offset)
                     } else {
                         Ok(0xFFFF)
                     }
-                },
+                }
                 MemoryRegion::AudioRom => {
                     if let Some(rom) = self.roms.get("audio") {
                         rom.read_u16(offset)
                     } else {
                         Ok(0xFFFF)
                     }
-                },
+                }
                 MemoryRegion::IoRegisters => {
                     // Vérifier si c'est un registre SCSP (0x400-0x5FF)
                     // if offset >= 0x400 && offset < 0x600 {
                     //     Ok(self.scsp_audio.read_register(offset - 0x400) as u16)
                     // } else {
-                        // Lecture des registres I/O standard
-                        Ok(self.io_registers.read_register(offset) as u16)
+                    // Lecture des registres I/O standard
+                    Ok(self.io_registers.read_register(offset) as u16)
                     // }
-                },
+                }
             }
         } else {
             Ok(0xFFFF) // Lecture dans une zone non mappée
@@ -784,7 +866,7 @@ impl MemoryInterface for Model2Memory {
                 }
             }
         }
-        
+
         // Déterminer la région mémoire et l'offset
         let result = if let Some((region, offset)) = self.mapping.resolve(address) {
             match region {
@@ -797,30 +879,30 @@ impl MemoryInterface for Model2Memory {
                     } else {
                         Ok(0xFFFFFFFF)
                     }
-                },
+                }
                 MemoryRegion::GraphicsRom => {
                     if let Some(rom) = self.roms.get("graphics") {
                         rom.read_u32(offset)
                     } else {
                         Ok(0xFFFFFFFF)
                     }
-                },
+                }
                 MemoryRegion::AudioRom => {
                     if let Some(rom) = self.roms.get("audio") {
                         rom.read_u32(offset)
                     } else {
                         Ok(0xFFFFFFFF)
                     }
-                },
+                }
                 MemoryRegion::IoRegisters => {
                     // Vérifier si c'est un registre SCSP (0x400-0x5FF)
                     // if offset >= 0x400 && offset < 0x600 {
                     //     Ok(self.scsp_audio.read_register(offset - 0x400))
                     // } else {
-                        // Lecture des registres I/O standard
-                        Ok(self.io_registers.read_register(offset))
+                    // Lecture des registres I/O standard
+                    Ok(self.io_registers.read_register(offset))
                     // }
-                },
+                }
             }
         } else {
             Ok(0xFFFFFFFF) // Lecture dans une zone non mappée
@@ -845,19 +927,22 @@ impl MemoryInterface for Model2Memory {
                 MemoryRegion::AudioRam => self.audio_ram.write_u8(offset, value),
                 MemoryRegion::ProgramRom | MemoryRegion::GraphicsRom | MemoryRegion::AudioRom => {
                     // Les ROMs sont en lecture seule
-                    Err(anyhow!("Tentative d'écriture en ROM à l'adresse {:08X}", address))
-                },
+                    Err(anyhow!(
+                        "Tentative d'écriture en ROM à l'adresse {:08X}",
+                        address
+                    ))
+                }
                 MemoryRegion::IoRegisters => {
                     // Vérifier si c'est un registre SCSP (0x400-0x5FF)
                     // if offset >= 0x400 && offset < 0x600 {
                     //     self.scsp_audio.write_register(offset - 0x400, value as u32);
                     //     Ok(())
                     // } else {
-                        // Écriture dans les registres I/O standard
-                        self.io_registers.write_register(offset, value as u32);
-                        Ok(())
+                    // Écriture dans les registres I/O standard
+                    self.io_registers.write_register(offset, value as u32);
+                    Ok(())
                     // }
-                },
+                }
             }
         } else {
             // Écriture dans une zone non mappée - ignorer silencieusement
@@ -868,9 +953,12 @@ impl MemoryInterface for Model2Memory {
     fn write_u16(&mut self, address: u32, value: u16) -> Result<()> {
         // Alignement vérifié
         if address % 2 != 0 {
-            return Err(anyhow!("Écriture u16 non alignée à l'adresse {:08X}", address));
+            return Err(anyhow!(
+                "Écriture u16 non alignée à l'adresse {:08X}",
+                address
+            ));
         }
-        
+
         // Déterminer la région mémoire et l'offset
         if let Some((region, offset)) = self.mapping.resolve(address) {
             match region {
@@ -879,19 +967,22 @@ impl MemoryInterface for Model2Memory {
                 MemoryRegion::AudioRam => self.audio_ram.write_u16(offset, value),
                 MemoryRegion::ProgramRom | MemoryRegion::GraphicsRom | MemoryRegion::AudioRom => {
                     // Les ROMs sont en lecture seule
-                    Err(anyhow!("Tentative d'écriture en ROM à l'adresse {:08X}", address))
-                },
+                    Err(anyhow!(
+                        "Tentative d'écriture en ROM à l'adresse {:08X}",
+                        address
+                    ))
+                }
                 MemoryRegion::IoRegisters => {
                     // Vérifier si c'est un registre SCSP (0x400-0x5FF)
                     // if offset >= 0x400 && offset < 0x600 {
                     //     self.scsp_audio.write_register(offset - 0x400, value as u32);
                     //     Ok(())
                     // } else {
-                        // Écriture dans les registres I/O standard
-                        self.io_registers.write_register(offset, value as u32);
-                        Ok(())
+                    // Écriture dans les registres I/O standard
+                    self.io_registers.write_register(offset, value as u32);
+                    Ok(())
                     // }
-                },
+                }
             }
         } else {
             // Écriture dans une zone non mappée - ignorer silencieusement
@@ -902,9 +993,12 @@ impl MemoryInterface for Model2Memory {
     fn write_u32(&mut self, address: u32, value: u32) -> Result<()> {
         // Alignement vérifié
         if address % 4 != 0 {
-            return Err(anyhow!("Écriture u32 non alignée à l'adresse {:08X}", address));
+            return Err(anyhow!(
+                "Écriture u32 non alignée à l'adresse {:08X}",
+                address
+            ));
         }
-        
+
         // Déterminer la région mémoire et l'offset
         if let Some((region, offset)) = self.mapping.resolve(address) {
             match region {
@@ -913,21 +1007,24 @@ impl MemoryInterface for Model2Memory {
                 MemoryRegion::AudioRam => self.audio_ram.write_u32(offset, value),
                 MemoryRegion::ProgramRom | MemoryRegion::GraphicsRom | MemoryRegion::AudioRom => {
                     // Les ROMs sont en lecture seule
-                    Err(anyhow!("Tentative d'écriture en ROM à l'adresse {:08X}", address))
-                },
+                    Err(anyhow!(
+                        "Tentative d'écriture en ROM à l'adresse {:08X}",
+                        address
+                    ))
+                }
                 MemoryRegion::IoRegisters => {
                     // Vérifier si c'est un registre SCSP (0x400-0x5FF)
                     // if offset >= 0x400 && offset < 0x600 {
                     //     self.scsp_audio.write_register(offset - 0x400, value);
                     //     Ok(())
                     // } else {
-                        // Écriture dans les registres I/O standard
-                        if let Some(gpu_command) = self.io_registers.write_register(offset, value) {
-                            self.enqueue_gpu_command(gpu_command);
-                        }
-                        Ok(())
+                    // Écriture dans les registres I/O standard
+                    if let Some(gpu_command) = self.io_registers.write_register(offset, value) {
+                        self.enqueue_gpu_command(gpu_command);
+                    }
+                    Ok(())
                     // }
-                },
+                }
             }
         } else {
             // Écriture dans une zone non mappée - ignorer silencieusement
@@ -958,29 +1055,44 @@ impl MemoryCache {
     }
 
     fn get_u8(&self, address: u32) -> Option<u8> {
-        self.entries.get(&address)
+        self.entries
+            .get(&address)
             .filter(|entry| entry.size == 1)
             .map(|entry| entry.value as u8)
     }
 
     fn get_u16(&self, address: u32) -> Option<u16> {
-        self.entries.get(&address)
+        self.entries
+            .get(&address)
             .filter(|entry| entry.size == 2)
             .map(|entry| entry.value as u16)
     }
 
     fn get_u32(&self, address: u32) -> Option<u32> {
-        self.entries.get(&address)
+        self.entries
+            .get(&address)
             .filter(|entry| entry.size == 4)
             .map(|entry| entry.value)
     }
 
     fn set_u8(&mut self, address: u32, value: u8) {
-        self.insert_entry(address, CacheEntry { value: value as u32, size: 1 });
+        self.insert_entry(
+            address,
+            CacheEntry {
+                value: value as u32,
+                size: 1,
+            },
+        );
     }
 
     fn set_u16(&mut self, address: u32, value: u16) {
-        self.insert_entry(address, CacheEntry { value: value as u32, size: 2 });
+        self.insert_entry(
+            address,
+            CacheEntry {
+                value: value as u32,
+                size: 2,
+            },
+        );
     }
 
     fn set_u32(&mut self, address: u32, value: u32) {
@@ -991,12 +1103,17 @@ impl MemoryCache {
         // Éviction si le cache est plein
         if self.entries.len() >= self.max_entries {
             // Stratégie simple : vider la moitié du cache
-            let keys: Vec<u32> = self.entries.keys().take(self.max_entries / 2).cloned().collect();
+            let keys: Vec<u32> = self
+                .entries
+                .keys()
+                .take(self.max_entries / 2)
+                .cloned()
+                .collect();
             for key in keys {
                 self.entries.remove(&key);
             }
         }
-        
+
         self.entries.insert(address, entry);
     }
 

@@ -31,9 +31,9 @@ impl BitManipulationUnit {
                 bit_position: None,
             };
         }
-        
+
         let bit_set = (value & (1 << bit_position)) != 0;
-        
+
         BitResult {
             value: if bit_set { 1 } else { 0 },
             bit_found: bit_set,
@@ -50,10 +50,10 @@ impl BitManipulationUnit {
                 bit_position: None,
             };
         }
-        
+
         let new_value = value | (1 << bit_position);
         let was_set = (value & (1 << bit_position)) != 0;
-        
+
         BitResult {
             value: new_value,
             bit_found: was_set,
@@ -70,10 +70,10 @@ impl BitManipulationUnit {
                 bit_position: None,
             };
         }
-        
+
         let new_value = value & !(1 << bit_position);
         let was_set = (value & (1 << bit_position)) != 0;
-        
+
         BitResult {
             value: new_value,
             bit_found: was_set,
@@ -90,10 +90,10 @@ impl BitManipulationUnit {
                 bit_position: None,
             };
         }
-        
+
         // Utilise l'instruction BSF (Bit Scan Forward) équivalente
         let position = value.trailing_zeros();
-        
+
         BitResult {
             value: position,
             bit_found: true,
@@ -110,11 +110,11 @@ impl BitManipulationUnit {
                 bit_position: None,
             };
         }
-        
+
         // Inverse les bits et cherche le premier 1
         let inverted = !value;
         let position = inverted.trailing_zeros();
-        
+
         BitResult {
             value: position,
             bit_found: true,
@@ -148,9 +148,9 @@ impl BitManipulationUnit {
                 bit_position: None,
             };
         }
-        
+
         let position = 31 - value.leading_zeros();
-        
+
         BitResult {
             value: position,
             bit_found: true,
@@ -198,11 +198,11 @@ mod tests {
     #[test]
     fn test_rotations() {
         let value = 0b11000000000000000000000000000001u32;
-        
+
         // Rotation à gauche de 1
         let rotated = BitManipulationUnit::rotate_left(value, 1);
         assert_eq!(rotated, 0b10000000000000000000000000000011u32);
-        
+
         // Rotation à droite de 1
         let rotated = BitManipulationUnit::rotate_right(value, 1);
         assert_eq!(rotated, 0b11100000000000000000000000000000u32);

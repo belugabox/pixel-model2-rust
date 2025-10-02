@@ -7,19 +7,19 @@ use bitflags::bitflags;
 pub struct V60Registers {
     /// Registres généraux (R0-R31)
     pub general: [u32; 32],
-    
+
     /// Program Counter (compteur de programme)
     pub pc: u32,
-    
+
     /// Stack Pointer (pointeur de pile)
     pub sp: u32,
-    
+
     /// Frame Pointer (pointeur de frame)
     pub fp: u32,
-    
+
     /// Processor Status Word (mot d'état du processeur)
     pub psw: ProcessorStatusWord,
-    
+
     /// Registres de contrôle système
     pub control: [u32; 16],
 }
@@ -79,22 +79,22 @@ impl V60Registers {
             self.control[index] = value;
         }
     }
-    
+
     /// Alias pour read_general - lecture d'un GPR (General Purpose Register)
     pub fn get_gpr(&self, index: usize) -> u32 {
         self.read_general(index)
     }
-    
+
     /// Alias pour write_general - écriture d'un GPR
     pub fn set_gpr(&mut self, index: usize, value: u32) {
         self.write_general(index, value);
     }
-    
+
     /// Lit le compteur de programme (PC)
     pub fn get_pc(&self) -> u32 {
         self.pc
     }
-    
+
     /// Écrit le compteur de programme (PC)
     pub fn set_pc(&mut self, value: u32) {
         self.pc = value;
@@ -113,25 +113,25 @@ bitflags! {
     pub struct ProcessorStatusWord: u32 {
         /// Carry flag - résultat d'une opération génère une retenue
         const CARRY = 1 << 0;
-        
+
         /// Zero flag - résultat d'une opération est zéro
         const ZERO = 1 << 1;
-        
+
         /// Sign flag - résultat d'une opération est négatif
         const SIGN = 1 << 2;
-        
+
         /// Overflow flag - débordement arithmétique
         const OVERFLOW = 1 << 3;
-        
+
         /// Interrupt enable - autorise les interruptions
         const INTERRUPT_ENABLE = 1 << 8;
-        
+
         /// Supervisor mode - mode superviseur activé
         const SUPERVISOR = 1 << 15;
-        
+
         /// Parity flag - parité du résultat (nombre pair de bits à 1)
         const PARITY = 1 << 4;
-        
+
         /// Debug mode - mode débogage activé
         const DEBUG = 1 << 16;
     }
@@ -142,20 +142,20 @@ impl ProcessorStatusWord {
     pub fn update_flags(&mut self, result: u32, carry: bool, overflow: bool) {
         // Clear existing condition flags
         self.remove(Self::CARRY | Self::ZERO | Self::SIGN | Self::OVERFLOW);
-        
+
         // Set flags based on result
         if carry {
             self.insert(Self::CARRY);
         }
-        
+
         if result == 0 {
             self.insert(Self::ZERO);
         }
-        
+
         if (result as i32) < 0 {
             self.insert(Self::SIGN);
         }
-        
+
         if overflow {
             self.insert(Self::OVERFLOW);
         }
@@ -163,23 +163,43 @@ impl ProcessorStatusWord {
 
     /// Méthodes individuelles pour les flags (pour compatibility avec ArithmeticResult)
     pub fn set_zero_flag(&mut self, value: bool) {
-        if value { self.insert(Self::ZERO); } else { self.remove(Self::ZERO); }
+        if value {
+            self.insert(Self::ZERO);
+        } else {
+            self.remove(Self::ZERO);
+        }
     }
-    
+
     pub fn set_negative_flag(&mut self, value: bool) {
-        if value { self.insert(Self::SIGN); } else { self.remove(Self::SIGN); }
+        if value {
+            self.insert(Self::SIGN);
+        } else {
+            self.remove(Self::SIGN);
+        }
     }
-    
+
     pub fn set_carry_flag(&mut self, value: bool) {
-        if value { self.insert(Self::CARRY); } else { self.remove(Self::CARRY); }
+        if value {
+            self.insert(Self::CARRY);
+        } else {
+            self.remove(Self::CARRY);
+        }
     }
-    
+
     pub fn set_overflow_flag(&mut self, value: bool) {
-        if value { self.insert(Self::OVERFLOW); } else { self.remove(Self::OVERFLOW); }
+        if value {
+            self.insert(Self::OVERFLOW);
+        } else {
+            self.remove(Self::OVERFLOW);
+        }
     }
-    
+
     pub fn set_parity_flag(&mut self, value: bool) {
-        if value { self.insert(Self::PARITY); } else { self.remove(Self::PARITY); }
+        if value {
+            self.insert(Self::PARITY);
+        } else {
+            self.remove(Self::PARITY);
+        }
     }
 
     /// Vérifie si une condition est vraie basée sur les flags
@@ -195,10 +215,18 @@ impl ProcessorStatusWord {
             ConditionCode::Positive => !self.contains(Self::SIGN),
             ConditionCode::Overflow => self.contains(Self::OVERFLOW),
             ConditionCode::NotOverflow => !self.contains(Self::OVERFLOW),
-            ConditionCode::Greater => !self.contains(Self::ZERO) && (self.contains(Self::SIGN) == self.contains(Self::OVERFLOW)),
+            ConditionCode::Greater => {
+                !self.contains(Self::ZERO)
+                    && (self.contains(Self::SIGN) == self.contains(Self::OVERFLOW))
+            }
             ConditionCode::Less => self.contains(Self::SIGN) != self.contains(Self::OVERFLOW),
-            ConditionCode::GreaterEqual => self.contains(Self::SIGN) == self.contains(Self::OVERFLOW),
-            ConditionCode::LessEqual => self.contains(Self::ZERO) || (self.contains(Self::SIGN) != self.contains(Self::OVERFLOW)),
+            ConditionCode::GreaterEqual => {
+                self.contains(Self::SIGN) == self.contains(Self::OVERFLOW)
+            }
+            ConditionCode::LessEqual => {
+                self.contains(Self::ZERO)
+                    || (self.contains(Self::SIGN) != self.contains(Self::OVERFLOW))
+            }
         }
     }
 }

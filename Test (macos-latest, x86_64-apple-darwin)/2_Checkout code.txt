@@ -1,0 +1,71 @@
+﻿2025-10-02T12:50:55.2940480Z ##[group]Run actions/checkout@v4
+2025-10-02T12:50:55.2958560Z with:
+2025-10-02T12:50:55.2959160Z   repository: belugabox/pixel-model2-rust
+2025-10-02T12:50:55.2960130Z   token: ***
+2025-10-02T12:50:55.2960590Z   ssh-strict: true
+2025-10-02T12:50:55.2961080Z   ssh-user: git
+2025-10-02T12:50:55.2961590Z   persist-credentials: true
+2025-10-02T12:50:55.2962280Z   clean: true
+2025-10-02T12:50:55.2962800Z   sparse-checkout-cone-mode: true
+2025-10-02T12:50:55.2963440Z   fetch-depth: 1
+2025-10-02T12:50:55.2963950Z   fetch-tags: false
+2025-10-02T12:50:55.2964480Z   show-progress: true
+2025-10-02T12:50:55.2965010Z   lfs: false
+2025-10-02T12:50:55.2965480Z   submodules: false
+2025-10-02T12:50:55.2965970Z   set-safe-directory: true
+2025-10-02T12:50:55.2967030Z env:
+2025-10-02T12:50:55.2967510Z   CARGO_TERM_COLOR: always
+2025-10-02T12:50:55.2968040Z ##[endgroup]
+2025-10-02T12:50:55.5931440Z Syncing repository: belugabox/pixel-model2-rust
+2025-10-02T12:50:55.5933660Z ##[group]Getting Git version info
+2025-10-02T12:50:55.5934750Z Working directory is '/Users/runner/work/pixel-model2-rust/pixel-model2-rust'
+2025-10-02T12:50:55.5936200Z [command]/opt/homebrew/bin/git version
+2025-10-02T12:50:55.6353140Z git version 2.50.1
+2025-10-02T12:50:55.6380850Z ##[endgroup]
+2025-10-02T12:50:55.6388800Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/f99f10bd-8d2e-4f4f-a0b1-039733d125d8/.gitconfig'
+2025-10-02T12:50:55.6392990Z Temporarily overriding HOME='/Users/runner/work/_temp/f99f10bd-8d2e-4f4f-a0b1-039733d125d8' before making global git config changes
+2025-10-02T12:50:55.6395260Z Adding repository directory to the temporary git global config as a safe directory
+2025-10-02T12:50:55.6396980Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/pixel-model2-rust/pixel-model2-rust
+2025-10-02T12:50:55.6503210Z Deleting the contents of '/Users/runner/work/pixel-model2-rust/pixel-model2-rust'
+2025-10-02T12:50:55.6506530Z ##[group]Initializing the repository
+2025-10-02T12:50:55.6511480Z [command]/opt/homebrew/bin/git init /Users/runner/work/pixel-model2-rust/pixel-model2-rust
+2025-10-02T12:50:55.6701270Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-10-02T12:50:55.6704660Z hint: is subject to change. To configure the initial branch name to use in all
+2025-10-02T12:50:55.6706290Z hint: of your new repositories, which will suppress this warning, call:
+2025-10-02T12:50:55.6707300Z hint:
+2025-10-02T12:50:55.6707910Z hint: 	git config --global init.defaultBranch <name>
+2025-10-02T12:50:55.6708750Z hint:
+2025-10-02T12:50:55.6709500Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-10-02T12:50:55.6710700Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-10-02T12:50:55.6711740Z hint:
+2025-10-02T12:50:55.6712220Z hint: 	git branch -m <name>
+2025-10-02T12:50:55.6712770Z hint:
+2025-10-02T12:50:55.6713520Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2025-10-02T12:50:55.6715110Z Initialized empty Git repository in /Users/runner/work/pixel-model2-rust/pixel-model2-rust/.git/
+2025-10-02T12:50:55.6717750Z [command]/opt/homebrew/bin/git remote add origin https://github.com/belugabox/pixel-model2-rust
+2025-10-02T12:50:55.6791780Z ##[endgroup]
+2025-10-02T12:50:55.6810260Z ##[group]Disabling automatic garbage collection
+2025-10-02T12:50:55.6913510Z [command]/opt/homebrew/bin/git config --local gc.auto 0
+2025-10-02T12:50:55.6992560Z ##[endgroup]
+2025-10-02T12:50:55.6993820Z ##[group]Setting up auth
+2025-10-02T12:50:55.6995100Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-10-02T12:50:55.6998250Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-10-02T12:50:55.8155410Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-10-02T12:50:55.8191310Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-10-02T12:50:55.8922160Z [command]/opt/homebrew/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-10-02T12:50:55.8974430Z ##[endgroup]
+2025-10-02T12:50:55.8975360Z ##[group]Fetching the repository
+2025-10-02T12:50:55.8980050Z [command]/opt/homebrew/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +08872952fc208661dc31f64c5ce5408715406f86:refs/remotes/pull/1/merge
+2025-10-02T12:50:56.5990240Z From https://github.com/belugabox/pixel-model2-rust
+2025-10-02T12:50:56.5991190Z  * [new ref]         08872952fc208661dc31f64c5ce5408715406f86 -> pull/1/merge
+2025-10-02T12:50:56.6074710Z ##[endgroup]
+2025-10-02T12:50:56.6075090Z ##[group]Determining the checkout info
+2025-10-02T12:50:56.6075460Z ##[endgroup]
+2025-10-02T12:50:56.6079390Z [command]/opt/homebrew/bin/git sparse-checkout disable
+2025-10-02T12:50:56.6152960Z [command]/opt/homebrew/bin/git config --local --unset-all extensions.worktreeConfig
+2025-10-02T12:50:56.6213400Z ##[group]Checking out the ref
+2025-10-02T12:50:56.6215680Z [command]/opt/homebrew/bin/git checkout --progress --force refs/remotes/pull/1/merge
+2025-10-02T12:50:56.6418780Z HEAD is now at 0887295 Merge 38225a1a218f8c2dd2156c3d164a192f1398ca52 into 6265fd16b087c0701f70e3b4ceba98de7cea09dd
+2025-10-02T12:50:56.6633700Z ##[endgroup]
+2025-10-02T12:50:56.6935670Z [command]/opt/homebrew/bin/git log -1 --format=%H
+2025-10-02T12:50:56.7036140Z 08872952fc208661dc31f64c5ce5408715406f86

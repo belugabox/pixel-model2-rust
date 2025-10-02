@@ -1,8 +1,8 @@
 //! Gestion des contrôles et entrées
 
+use std::collections::HashSet;
 use winit::event::ElementState;
 use winit::keyboard::KeyCode;
-use std::collections::HashSet;
 
 /// Gestionnaire d'entrées
 #[derive(Debug)]
@@ -33,15 +33,19 @@ impl InputManager {
             player2: PlayerInput::default(),
         }
     }
-    
+
     pub fn handle_key(&mut self, key: KeyCode, state: ElementState) {
         match state {
-            ElementState::Pressed => { self.pressed_keys.insert(key); },
-            ElementState::Released => { self.pressed_keys.remove(&key); },
+            ElementState::Pressed => {
+                self.pressed_keys.insert(key);
+            }
+            ElementState::Released => {
+                self.pressed_keys.remove(&key);
+            }
         }
         self.update_player_inputs();
     }
-    
+
     fn update_player_inputs(&mut self) {
         // Player 1 (WASD + touches)
         self.player1.up = self.pressed_keys.contains(&KeyCode::KeyW);
@@ -52,7 +56,7 @@ impl InputManager {
         self.player1.kick = self.pressed_keys.contains(&KeyCode::KeyK);
         self.player1.guard = self.pressed_keys.contains(&KeyCode::KeyL);
         self.player1.start = self.pressed_keys.contains(&KeyCode::Enter);
-        
+
         // Player 2 (flèches + numpad)
         self.player2.up = self.pressed_keys.contains(&KeyCode::ArrowUp);
         self.player2.down = self.pressed_keys.contains(&KeyCode::ArrowDown);
