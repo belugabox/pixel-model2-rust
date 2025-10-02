@@ -74,7 +74,8 @@ fn test_complete_rom_system() -> Result<()> {
 
     // Créer le système ROM
     let mut rom_system = Model2RomSystem::new();
-    rom_system.add_search_path(temp_dir.path());
+    // Forcer le chemin de recherche uniquement sur le répertoire temporaire pour que le test soit déterministe
+    rom_system.rom_manager.set_search_paths(vec![temp_dir.path().to_path_buf()]);
 
     // Configuration mémoire personnalisée
     let memory_config = Model2MemoryConfig {
@@ -131,7 +132,8 @@ fn test_rom_scanning() -> Result<()> {
     fs::write(temp_dir.path().join("archive.zip"), b"fake zip")?;
 
     let mut rom_system = Model2RomSystem::new();
-    rom_system.add_search_path(temp_dir.path());
+    // Forcer le chemin de recherche uniquement sur le répertoire temporaire
+    rom_system.rom_manager.set_search_paths(vec![temp_dir.path().to_path_buf()]);
 
     let available = rom_system.rom_manager.scan_available_roms()?;
     assert_eq!(available.len(), 3);
@@ -238,7 +240,8 @@ fn test_rom_system_performance() -> Result<()> {
     let start = std::time::Instant::now();
 
     let mut rom_system = Model2RomSystem::new();
-    rom_system.add_search_path(temp_dir.path());
+    // Forcer le chemin de recherche uniquement sur le répertoire temporaire pour le test de performance
+    rom_system.rom_manager.set_search_paths(vec![temp_dir.path().to_path_buf()]);
 
     let _available = rom_system.rom_manager.scan_available_roms()?;
     let _report = rom_system.rom_manager.generate_availability_report()?;

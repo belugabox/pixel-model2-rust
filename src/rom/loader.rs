@@ -166,6 +166,11 @@ impl RomManager {
         self.search_paths.push(path.as_ref().to_path_buf());
     }
 
+    /// Remplace complètement la liste des chemins de recherche (utile pour tests)
+    pub fn set_search_paths(&mut self, paths: Vec<PathBuf>) {
+        self.search_paths = paths;
+    }
+
     /// Configure les paramètres de chargement
     pub fn set_load_config(&mut self, config: LoadConfig) {
         self.load_config = config;
